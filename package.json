@@ -1,0 +1,25 @@
+{
+  "name": "saturn",
+  "version": "0.1",
+  "description": "Saturn is a Chrome Extension to help debug GraphQL requests, similar to the Network tab.",
+  "main": "index.js",
+  "author": "Patrik Gallik <patrik.gallik@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack --mode production",
+    "start:dev": "webpack-dev-server"
+  },
+  "dependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/preset-react": "^7.9.4",
+    "babel-loader": "^8.1.0",
+    "html-webpack-plugin": "^4.0.4",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "styled-components": "^5.0.1",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
+  }
+}
