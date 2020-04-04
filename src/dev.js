@@ -18,6 +18,7 @@ function Dev() {
       <List
         list={[
           {
+            id: '1',
             operationName: "getProjectsBySlug",
             errorMessages: ["Forbidden", "No valid ID extracted from 1"],
             errors: 2,
@@ -38,6 +39,7 @@ function Dev() {
       `,
           },
           {
+            id: '2',
             operationName: "getProjects",
             httpStatus: "OK",
             errorMessages: ["Forbidden", "No valid ID extracted from 1"],
@@ -59,6 +61,7 @@ function Dev() {
       `,
           },
           {
+            id: '3',
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -79,6 +82,7 @@ function Dev() {
       `,
           },
           {
+            id: '4',
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -99,6 +103,7 @@ function Dev() {
       `,
           },
           {
+            id: '5',
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -119,6 +124,7 @@ function Dev() {
       `,
           },
           {
+            id: '6',
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -139,6 +145,7 @@ function Dev() {
       `,
           },
           {
+            id: '7',
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -159,6 +166,7 @@ function Dev() {
       `,
           },
           {
+            id: '8',
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -179,6 +187,7 @@ function Dev() {
       `,
           },
           {
+            id: '9',
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -199,6 +208,7 @@ function Dev() {
       `,
           },
           {
+            id: '10',
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -219,6 +229,7 @@ function Dev() {
       `,
           },
           {
+            id: '11',
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -239,6 +250,7 @@ function Dev() {
       `,
           },
           {
+            id: '12',
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -259,6 +271,7 @@ function Dev() {
       `,
           },
           {
+            id: '13',
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -279,6 +292,7 @@ function Dev() {
       `,
           },
           {
+            id: '14',
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -299,6 +313,7 @@ function Dev() {
       `,
           },
           {
+            id: '15',
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -319,6 +334,7 @@ function Dev() {
       `,
           },
           {
+            id: '16',
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -339,6 +355,7 @@ function Dev() {
       `,
           },
           {
+            id: '17',
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -359,6 +376,7 @@ function Dev() {
       `,
           },
           {
+            id: '18',
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,

@@ -71,6 +71,7 @@ function Panel() {
 
   const transformed = state.list.map((item) => {
     return {
+      id: item.raw.startedDateTime + Date.now(),
       operationName: item.request.operationName || "Untitled operation",
       status: item.raw.response.status,
       queryShort: item.request.query ? item.request.query.substring(0, 26) : "",

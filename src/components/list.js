@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import {
   useTable,
@@ -6,6 +6,7 @@ import {
   useResizeColumns,
   useSortBy,
 } from "react-table";
+import { Sidebar } from "@/components/sidebar";
 
 const Global = styled.div`
   .arrow {
@@ -77,6 +78,24 @@ const Header = styled.div`
   }
 `;
 
+const Row = styled.div`
+  cursor: pointer;
+  color: #323941;
+  &:nth-child(2n) {
+    background-color: #f5f5f5;
+  }
+  &:hover {
+    background-color: #f2f6fc;
+  }
+  &.has-error {
+    color: #d42d1f;
+  }
+  &.is-active {
+    background-color: #1974e8;
+    color: white !important;
+  }
+`;
+
 const Cell = styled.div`
   padding: 0 6px;
   font-size: 12px;
@@ -109,17 +128,15 @@ const Wrap = styled.div`
   border-bottom: 1px solid black;
 `;
 
-const Row = styled.div`
-  cursor: pointer;
-  &:nth-child(2n) {
-    background-color: #f5f5f5;
-  }
-  &:hover {
-    background-color: #f2f6fc;
-  }
-  color: #323941;
-  &.has-error {
-    color: #d42d1f;
+const Container = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  > div {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-flow: nowrap column;
+    overflow: hidden;
   }
 `;
 
@@ -133,12 +150,12 @@ const columns = [
   { Header: "Operation", accessor: "operationName" },
   { Header: "HTTP Status", accessor: "status" },
   { Header: "Query", accessor: "queryShort" },
-  // { Header: 'Errors', accessor: 'errors' },
   { Header: "Errors", accessor: "errorMessages" },
 ];
 
 export function List(props) {
   const { list = [] } = props;
+  const [activeRequestId, setActiveRequestId] = useState(null);
 
   const defaultColumn = React.useMemo(
     () => ({
@@ -167,74 +184,89 @@ export function List(props) {
   );
 
   return (
-    <Global>
-      <Table>
-        <div>
-          {headerGroups.map((headerGroup) => (
-            <div {...headerGroup.getHeaderGroupProps()} className="tr">
-              {headerGroup.headers.map((column) => (
-                <Header
-                  {...column.getHeaderProps({
-                    className: column.collapse ? "collapse" : "",
-                    ...column.getSortByToggleProps(),
-                  })}
-                  className="th"
-                >
-                  {column.render("Header")}
+    <Container>
+      <Global>
+        <Table>
+          <div>
+            {headerGroups.map((headerGroup) => (
+              <div {...headerGroup.getHeaderGroupProps()} className="tr">
+                {headerGroup.headers.map((column) => (
+                  <Header
+                    {...column.getHeaderProps({
+                      className: column.collapse ? "collapse" : "",
+                      ...column.getSortByToggleProps(),
+                    })}
+                    className="th"
+                  >
+                    {column.render("Header")}
 
-                  {column.isSorted ? (
-                    column.isSortedDesc ? (
-                      <div className="arrow arrow-down"></div>
+                    {column.isSorted ? (
+                      column.isSortedDesc ? (
+                        <div className="arrow arrow-down"></div>
+                      ) : (
+                        <div className="arrow arrow-up"></div>
+                      )
                     ) : (
-                      <div className="arrow arrow-up"></div>
-                    )
-                  ) : (
-                    ""
-                  )}
+                      ""
+                    )}
 
-                  <div
-                    {...column.getResizerProps()}
-                    className={`resizer ${
-                      column.isResizing ? "isResizing" : ""
-                    }`}
-                  />
-                </Header>
-              ))}
-            </div>
-          ))}
-        </div>
-        <TBody {...getTableBodyProps()}>
-          {rows.map((row, i) => {
-            prepareRow(row);
-            const hasError = row.original.errors > 0;
-            return (
-              <Row
-                {...row.getRowProps()}
-                className={hasError ? "has-error" : ""}
-              >
-                {row.cells.map((cell, index) => {
-                  return (
-                    <Cell
-                      {...cell.getCellProps({
-                        className: cell.column.collapse ? "collapse" : "",
-                      })}
-                      className="td"
-                    >
-                      {cell.render("Cell")}
-                      <div
-                        {...cell.column.getResizerProps()}
-                        className={`resizer ${
-                          cell.column.isResizing ? "isResizing" : ""
-                        }`}
-                      />
-                    </Cell>
-                  );
-                })}
-              </Row>
-            );
-          })}
-        </TBody>
-      </Table>
-    </Global>
+                    <div
+                      {...column.getResizerProps()}
+                      className={`resizer ${
+                        column.isResizing ? "isResizing" : ""
+                      }`}
+                    />
+                  </Header>
+                ))}
+              </div>
+            ))}
+          </div>
+          <TBody {...getTableBodyProps()}>
+            {rows.map((row, i) => {
+              prepareRow(row);
+              const hasError = row.original.errors > 0;
+              const isActive = row.original.id === activeRequestId;
+              return (
+                <Row
+                  {...row.getRowProps()}
+                  className={
+                    (hasError ? "has-error" : "") +
+                    (isActive ? " is-active" : "")
+                  }
+                  onClick={() => {
+                    setActiveRequestId(row.original.id);
+                  }}
+                >
+                  {row.cells.map((cell, index) => {
+                    return (
+                      <Cell
+                        {...cell.getCellProps({
+                          className: cell.column.collapse ? "collapse" : "",
+                        })}
+                        className="td"
+                      >
+                        {cell.render("Cell")}
+                        <div
+                          {...cell.column.getResizerProps()}
+                          className={`resizer ${
+                            cell.column.isResizing ? "isResizing" : ""
+                          }`}
+                        />
+                      </Cell>
+                    );
+                  })}
+                </Row>
+              );
+            })}
+          </TBody>
+        </Table>
+      </Global>
+      {activeRequestId && (
+        <Sidebar
+          item={list.find((i) => i.id === activeRequestId)}
+          onClose={() => setActiveRequestId(null)}
+        />
+      )}
+    </Container>
   );
 }
