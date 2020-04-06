@@ -1,10 +1,12 @@
 const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: "development",
   entry: {
-    panel: "./src/panel.js",
+    saturn: "./src/saturn.js",
     dev: "./src/dev.js",
+    devtools: "./src/devtools.js",
   },
   devtool: "inline-source-map",
   devServer: {
@@ -22,6 +24,14 @@ module.exports = {
       "@": path.resolve(__dirname, "src"), // shortcut to reference src folder from anywhere
     },
   },
+  plugins: [
+    new CopyPlugin([
+      { from: "src/saturn.html", to: "saturn.html" },
+      { from: "src/devtools.html", to: "devtools.html" },
+      { from: "src/dev.html", to: "dev.html" },
+      { from: "src/manifest.json", to: "manifest.json" },
+    ]),
+  ],
   module: {
     rules: [
       {
