@@ -8,7 +8,11 @@ import {
 } from "react-table";
 import { Sidebar } from "@/components/sidebar";
 
-const Global = styled.div`
+const TableWrapper = styled.div`
+  width: 100%;
+  flex-grow: 1;
+  overflow-x: auto;
+
   .arrow {
     position: absolute;
     right: 6px;
@@ -101,43 +105,28 @@ const Cell = styled.div`
   font-size: 12px;
   height: 38px;
   border-right: 1px solid #e1e1e1;
-
   position: relative;
   display: flex !important;
   align-items: center;
+  overflow: hidden;
   /* The secret sauce */
   /* Each cell should grow equally */
-  width: 1%;
+  //width: 1%;
   /* But "collapsed" cells should be as small as possible */
-  &.collapse {
-    width: 0.0000000001%;
-  }
-`;
-
-const Panel = styled.div`
-  /* This is required to make the table full-width */
-  display: block;
-  max-width: 100%;
-`;
-
-const Wrap = styled.div`
-  display: block;
-  max-width: 100%;
-  overflow-x: scroll;
-  overflow-y: hidden;
-  border-bottom: 1px solid black;
+  //&.collapse {
+  //  width: 0.0000000001%;
+  //}
 `;
 
 const Container = styled.div`
   display: flex;
   flex-flow: row nowrap;
-  > div {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-flow: nowrap column;
-    overflow: hidden;
-  }
+`;
+
+const SidebarWrapper = styled.div`
+  min-width: 600px;
+  flex-grow: 1;
+  flex-direction: column;
 `;
 
 const TBody = styled.div`
@@ -147,21 +136,89 @@ const TBody = styled.div`
 `;
 
 const columns = [
-  { Header: "Operation", accessor: "operationName" },
+  { Header: "Operation name", accessor: "operationName" },
   { Header: "HTTP Status", accessor: "status" },
-  { Header: "Query", accessor: "queryShort" },
+  { Header: "Query", accessor: "query" },
+  { Header: "Variables", accessor: "variablesString" },
+  { Header: "Data", accessor: "dataString" },
   { Header: "Errors", accessor: "errorMessages" },
 ];
 
-export function List(props) {
+const EmptyStateStyled = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 14px;
+  color: #777777;
+  p {
+    margin: 8px 0;
+    line-height: 1;
+  }
+`;
+
+function EmptyState() {
+  return (
+    <EmptyStateStyled>
+      <h1>🚀</h1>
+      <p>Recording GraphQL requests...</p>
+      <p>Perform a request or reload the page to record.</p>
+      <p>
+        <a
+          target="_blank"
+          href="https://github.com/patresk/saturn/blob/master/src/panel.js#L10"
+        >
+          How GraphQL request is detected?
+        </a>
+      </p>
+    </EmptyStateStyled>
+  );
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error(error);
+    this.setState({ hasError: true });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <EmptyStateStyled>
+          <h1>⚠️</h1>
+          <p>Unexpected problem occurred.</p>
+          <p>
+            <a target="_blank" href="https://github.com/patresk/saturn/issues">
+              Create a GitHub issue
+            </a>
+          </p>
+        </EmptyStateStyled>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function ListPure(props) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
 
+  const defaultColumnWidth =
+    window.innerWidth / columns.length - (activeRequestId ? 600 : 0);
   const defaultColumn = React.useMemo(
     () => ({
-      minWidth: 30,
-      width: 150,
-      maxWidth: 400,
+      minWidth: 50,
+      width: defaultColumnWidth,
+      maxWidth: Math.max(defaultColumnWidth, 400),
     }),
     []
   );
@@ -183,90 +240,110 @@ export function List(props) {
     useSortBy
   );
 
+  console.log("active", activeRequestId);
+
   return (
     <Container>
-      <Global>
-        <Table>
-          <div>
-            {headerGroups.map((headerGroup) => (
-              <div {...headerGroup.getHeaderGroupProps()} className="tr">
-                {headerGroup.headers.map((column) => (
-                  <Header
-                    {...column.getHeaderProps({
-                      className: column.collapse ? "collapse" : "",
-                      ...column.getSortByToggleProps(),
-                    })}
-                    className="th"
-                  >
-                    {column.render("Header")}
+      {list.length === 0 && <EmptyState />}
+      {list.length > 0 && (
+        <TableWrapper>
+          <Table>
+            <div>
+              {headerGroups.map((headerGroup) => (
+                <div {...headerGroup.getHeaderGroupProps()} className="tr">
+                  {headerGroup.headers.map((column) => (
+                    <Header
+                      {...column.getHeaderProps({
+                        className: column.collapse ? "collapse" : "",
+                        ...column.getSortByToggleProps(),
+                      })}
+                      className="th"
+                    >
+                      {column.render("Header")}
 
-                    {column.isSorted ? (
-                      column.isSortedDesc ? (
-                        <div className="arrow arrow-down"></div>
+                      {column.isSorted ? (
+                        column.isSortedDesc ? (
+                          <div className="arrow arrow-down"></div>
+                        ) : (
+                          <div className="arrow arrow-up"></div>
+                        )
                       ) : (
-                        <div className="arrow arrow-up"></div>
-                      )
-                    ) : (
-                      ""
-                    )}
+                        ""
+                      )}
 
-                    <div
-                      {...column.getResizerProps()}
-                      className={`resizer ${
-                        column.isResizing ? "isResizing" : ""
-                      }`}
-                    />
-                  </Header>
-                ))}
-              </div>
-            ))}
-          </div>
-          <TBody {...getTableBodyProps()}>
-            {rows.map((row, i) => {
-              prepareRow(row);
-              const hasError = row.original.errors > 0;
-              const isActive = row.original.id === activeRequestId;
-              return (
-                <Row
-                  {...row.getRowProps()}
-                  className={
-                    (hasError ? "has-error" : "") +
-                    (isActive ? " is-active" : "")
-                  }
-                  onClick={() => {
-                    setActiveRequestId(row.original.id);
-                  }}
-                >
-                  {row.cells.map((cell, index) => {
-                    return (
-                      <Cell
-                        {...cell.getCellProps({
-                          className: cell.column.collapse ? "collapse" : "",
-                        })}
-                        className="td"
-                      >
-                        {cell.render("Cell")}
-                        <div
-                          {...cell.column.getResizerProps()}
-                          className={`resizer ${
-                            cell.column.isResizing ? "isResizing" : ""
-                          }`}
-                        />
-                      </Cell>
-                    );
-                  })}
-                </Row>
-              );
-            })}
-          </TBody>
-        </Table>
-      </Global>
-      {activeRequestId && (
-        <Sidebar
-          item={list.find((i) => i.id === activeRequestId)}
-          onClose={() => setActiveRequestId(null)}
-        />
+                      <div
+                        {...column.getResizerProps()}
+                        className={`resizer ${
+                          column.isResizing ? "isResizing" : ""
+                        }`}
+                      />
+                    </Header>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <TBody
+              {...getTableBodyProps()}
+              style={{
+                overFlowX: "auto",
+              }}
+            >
+              {rows.map((row, i) => {
+                prepareRow(row);
+                const hasError = row.original.errorsCount > 0;
+                const isActive = row.original.id === activeRequestId;
+                return (
+                  <Row
+                    {...row.getRowProps()}
+                    className={
+                      (hasError ? "has-error" : "") +
+                      (isActive ? " is-active" : "")
+                    }
+                    onClick={() => {
+                      setActiveRequestId(row.original.id);
+                    }}
+                  >
+                    {row.cells.map((cell, index) => {
+                      return (
+                        <Cell
+                          {...cell.getCellProps({
+                            className: cell.column.collapse ? "collapse" : "",
+                          })}
+                          className="td"
+                        >
+                          {cell.render("Cell")}
+                          <div
+                            {...cell.column.getResizerProps()}
+                            className={`resizer ${
+                              cell.column.isResizing ? "isResizing" : ""
+                            }`}
+                          />
+                        </Cell>
+                      );
+                    })}
+                  </Row>
+                );
+              })}
+            </TBody>
+          </Table>
+        </TableWrapper>
+      )}
+      {activeRequestId && list.find((i) => i.id === activeRequestId) && (
+        <SidebarWrapper>
+          <Sidebar
+            item={list.find((i) => i.id === activeRequestId)}
+            onClose={() => setActiveRequestId(null)}
+          />
+        </SidebarWrapper>
       )}
     </Container>
+  );
+}
+
+export function List(props) {
+  return (
+    <ErrorBoundary>
+      <ListPure {...props} />
+    </ErrorBoundary>
   );
 }

@@ -58,6 +58,7 @@ function Panel() {
         request.getContent(function (content) {
           // console.log('response', JSON.parse(content))
           const item = {
+            id: request.startedDateTime + Date.now(),
             raw: request,
             request: graphQl,
             response: JSON.parse(content),
@@ -71,15 +72,23 @@ function Panel() {
 
   const transformed = state.list.map((item) => {
     return {
-      id: item.raw.startedDateTime + Date.now(),
+      id: item.id,
       operationName: item.request.operationName || "Untitled operation",
       status: item.raw.response.status,
-      queryShort: item.request.query ? item.request.query.substring(0, 26) : "",
       query: item.request.query ? item.request.query : "",
-      errors: item.response.errors ? item.response.errors.length : 0,
+      queryShort: item.request.query ? item.request.query.substring(0, 26) : "",
+      // queryString: item.request.query ? item.request.query : "",
+      variables: item.request.variables ? item.request.variables : null,
+      variablesString: item.request.variables
+        ? JSON.stringify(item.request.variables)
+        : "",
+      errorsCount: item.response.errors ? item.response.errors.length : 0,
+      errors: item.response.errors ? item.response.errors : null,
       errorMessages: item.response.errors
         ? item.response.errors.map((err) => err.message)
         : [],
+      data: item.response.data ? item.response.data : null,
+      dataString: item.response.data ? JSON.stringify(item.response.data) : "",
     };
   });
 
