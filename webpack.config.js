@@ -1,5 +1,6 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const BomPlugin = require('webpack-utf8-bom');
 
 module.exports = {
   mode: "development",
@@ -31,6 +32,8 @@ module.exports = {
       { from: "src/dev.html", to: "dev.html" },
       { from: "src/manifest.json", to: "manifest.json" },
     ]),
+    // Believe or not, this plugin is required to properly render emojis in Chrome extensions.
+    new BomPlugin(true)
   ],
   module: {
     rules: [

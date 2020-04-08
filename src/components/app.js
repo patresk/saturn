@@ -165,7 +165,7 @@ function AppPure(props) {
   const [activeRequestId, setActiveRequestId] = useState(null);
 
   const defaultColumnWidth =
-    window.innerWidth / columns.length - (activeRequestId ? 600 : 0);
+    (window.innerWidth - 70 - 90) / (columns.length - 2) - (activeRequestId ? 600 : 0);
   const defaultColumn = React.useMemo(
     () => ({
       minWidth: 50,

@@ -1,4 +1,4 @@
-### Saturn
+# Saturn
 
 Saturn is a Chrome DevTools extension to debug GraphQL queries. Acts like a Network tab, but for GraphQL requests only.
 
