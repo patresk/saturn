@@ -5,7 +5,7 @@ import styled from "styled-components";
 import "@/css/chrome-shared.css";
 import "@/css/widgets.css";
 
-import { List } from "@/components/list";
+import { App } from "./components/app";
 
 // Devtools are zoomed out a little bit.
 const ZoomOut = styled.div`
@@ -15,10 +15,10 @@ const ZoomOut = styled.div`
 function Dev() {
   return (
     <ZoomOut>
-      <List
+      <App
         list={[
           {
-            id: '1',
+            id: "1",
             operationName: "getProjectsBySlug",
             errorMessages: ["Forbidden", "No valid ID extracted from 1"],
             errors: 2,
@@ -39,7 +39,7 @@ function Dev() {
       `,
           },
           {
-            id: '2',
+            id: "2",
             operationName: "getProjects",
             httpStatus: "OK",
             errorMessages: ["Forbidden", "No valid ID extracted from 1"],
@@ -61,7 +61,7 @@ function Dev() {
       `,
           },
           {
-            id: '3',
+            id: "3",
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -82,7 +82,7 @@ function Dev() {
       `,
           },
           {
-            id: '4',
+            id: "4",
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -103,7 +103,7 @@ function Dev() {
       `,
           },
           {
-            id: '5',
+            id: "5",
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -124,7 +124,7 @@ function Dev() {
       `,
           },
           {
-            id: '6',
+            id: "6",
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -145,7 +145,7 @@ function Dev() {
       `,
           },
           {
-            id: '7',
+            id: "7",
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -166,7 +166,7 @@ function Dev() {
       `,
           },
           {
-            id: '8',
+            id: "8",
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -187,7 +187,7 @@ function Dev() {
       `,
           },
           {
-            id: '9',
+            id: "9",
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -208,7 +208,7 @@ function Dev() {
       `,
           },
           {
-            id: '10',
+            id: "10",
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -229,7 +229,7 @@ function Dev() {
       `,
           },
           {
-            id: '11',
+            id: "11",
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -250,7 +250,7 @@ function Dev() {
       `,
           },
           {
-            id: '12',
+            id: "12",
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -271,7 +271,7 @@ function Dev() {
       `,
           },
           {
-            id: '13',
+            id: "13",
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -292,7 +292,7 @@ function Dev() {
       `,
           },
           {
-            id: '14',
+            id: "14",
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -313,7 +313,7 @@ function Dev() {
       `,
           },
           {
-            id: '15',
+            id: "15",
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,
@@ -334,7 +334,7 @@ function Dev() {
       `,
           },
           {
-            id: '16',
+            id: "16",
             operationName: "getProjectsBySlug",
             httpStatus: "OK",
             errors: 2,
@@ -355,7 +355,7 @@ function Dev() {
       `,
           },
           {
-            id: '17',
+            id: "17",
             operationName: "getProjects",
             httpStatus: "OK",
             errors: 0,
@@ -376,7 +376,7 @@ function Dev() {
       `,
           },
           {
-            id: '18',
+            id: "18",
             operationName: "getUser",
             httpStatus: "OK",
             errors: 1,

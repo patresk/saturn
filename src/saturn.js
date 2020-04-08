@@ -1,6 +1,6 @@
 import React, { useEffect, useReducer, useState } from "react";
 import ReactDOM from "react-dom";
-import { List } from "@/components/list";
+import { App } from "./components/app";
 
 import "@/css/chrome-shared.css";
 import "@/css/widgets.css";
@@ -43,7 +43,7 @@ function reducer(state, action) {
   }
 }
 
-function Panel() {
+function Saturn() {
   const [state, dispatch] = useReducer(reducer, { list: [] });
 
   useEffect(function () {
@@ -78,6 +78,9 @@ function Panel() {
         item.raw.response.status === 0 ? "Cancelled" : item.raw.response.status,
       query: item.request.query ? item.request.query : "",
       queryShort: item.request.query ? item.request.query.substring(0, 26) : "",
+      type: item.request.query.substring(0, 26).trim().startsWith("mutation")
+        ? "mutation"
+        : "query",
       variables: item.request.variables ? item.request.variables : null,
       variablesString: item.request.variables
         ? JSON.stringify(item.request.variables)
@@ -101,7 +104,7 @@ function Panel() {
   console.log("raw", state.list);
   console.log("transformed", transformed);
 
-  return <List list={transformed} />;
+  return <App list={transformed} />;
 }
 
-ReactDOM.render(<Panel />, document.getElementById("app"));
+ReactDOM.render(<Saturn />, document.getElementById("app"));

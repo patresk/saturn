@@ -6,40 +6,21 @@ import {
   useResizeColumns,
   useSortBy,
 } from "react-table";
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar } from "./sidebar";
+import { EmptyState, ErrorState } from "./non-ideal-states";
+import { DataCell, ErrorCell, QueryCell, VariablesCell } from "./cells";
 
 const TableWrapper = styled.div`
   width: 100%;
   flex-grow: 1;
   overflow-x: auto;
-
-  .arrow {
-    position: absolute;
-    right: 6px;
-    top: 11px;
-  }
-
-  .arrow-up {
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 7px solid #6e6e6e;
-  }
-
-  .arrow-down {
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 7px solid #6e6e6e;
-  }
 `;
 
 const Table = styled.div`
   border-spacing: 0;
   border-collapse: collapse;
   width: 100%;
+  overflow-x: hidden;
   .resizer {
     display: inline-block;
     width: 4px;
@@ -73,12 +54,27 @@ const Header = styled.div`
     background-color: #e6e6e6;
     cursor: pointer;
   }
-  /* The secret sauce */
-  /* Each cell should grow equally */
-  width: 1%;
-  /* But "collapsed" cells should be as small as possible */
   &.collapse {
     width: 0.0000000001%;
+  }
+  .arrow {
+    position: absolute;
+    right: 6px;
+    top: 11px;
+  }
+  .arrow-up {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 7px solid #6e6e6e;
+  }
+  .arrow-down {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 7px solid #6e6e6e;
   }
 `;
 
@@ -87,6 +83,9 @@ const Row = styled.div`
   color: #323941;
   &:nth-child(2n) {
     background-color: #f5f5f5;
+  }
+  &:nth-child(n):last-child {
+    border-bottom: 1px solid #f5f5f5;
   }
   &:hover {
     background-color: #f2f6fc;
@@ -97,6 +96,9 @@ const Row = styled.div`
   &.is-active {
     background-color: #1974e8;
     color: white !important;
+    span {
+      color: white !important;
+    }
   }
 `;
 
@@ -109,13 +111,6 @@ const Cell = styled.div`
   display: flex !important;
   align-items: center;
   overflow: hidden;
-  /* The secret sauce */
-  /* Each cell should grow equally */
-  //width: 1%;
-  /* But "collapsed" cells should be as small as possible */
-  //&.collapse {
-  //  width: 0.0000000001%;
-  //}
 `;
 
 const Container = styled.div`
@@ -137,46 +132,13 @@ const TBody = styled.div`
 
 const columns = [
   { Header: "Operation name", accessor: "operationName" },
-  { Header: "HTTP Status", accessor: "status" },
-  { Header: "Query", accessor: "query" },
-  { Header: "Variables", accessor: "variablesString" },
-  { Header: "Data", accessor: "dataString" },
-  { Header: "Errors", accessor: "errorMessages" },
+  { Header: "Type", width: 70, accessor: "type" },
+  { Header: "Query", accessor: "query", Cell: QueryCell },
+  { Header: "Variables", accessor: "variablesString", Cell: VariablesCell },
+  { Header: "Data", accessor: "dataString", Cell: DataCell },
+  { Header: "Errors", accessor: "errorMessages", Cell: ErrorCell },
+  { Header: "HTTP Status", width: 90, accessor: "status" },
 ];
-
-const EmptyStateStyled = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 100vh;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  font-size: 14px;
-  color: #777777;
-  p {
-    margin: 8px 0;
-    line-height: 1;
-  }
-`;
-
-function EmptyState() {
-  return (
-    <EmptyStateStyled>
-      <h1>🚀</h1>
-      <p>Recording GraphQL requests...</p>
-      <p>Perform a request or reload the page to record.</p>
-      <p>
-        <a
-          target="_blank"
-          href="https://github.com/patresk/saturn/blob/master/src/panel.js#L10"
-        >
-          How GraphQL request is detected?
-        </a>
-      </p>
-    </EmptyStateStyled>
-  );
-}
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -191,24 +153,14 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <EmptyStateStyled>
-          <h1>⚠️</h1>
-          <p>Unexpected problem occurred.</p>
-          <p>
-            <a target="_blank" href="https://github.com/patresk/saturn/issues">
-              Create a GitHub issue
-            </a>
-          </p>
-        </EmptyStateStyled>
-      );
+      return <ErrorState />;
     }
 
     return this.props.children;
   }
 }
 
-function ListPure(props) {
+function AppPure(props) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
 
@@ -239,8 +191,6 @@ function ListPure(props) {
     useResizeColumns,
     useSortBy
   );
-
-  console.log("active", activeRequestId);
 
   return (
     <Container>
@@ -340,10 +290,10 @@ function ListPure(props) {
   );
 }
 
-export function List(props) {
+export function App(props) {
   return (
     <ErrorBoundary>
-      <ListPure {...props} />
+      <AppPure {...props} />
     </ErrorBoundary>
   );
 }

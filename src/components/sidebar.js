@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import JSONTree from "react-json-tree";
 import { GraphqlCodeBlock } from "graphql-syntax-highlighter-react";
 
-const SidebarS = styled.div`
+const SidebarStyled = styled.div`
   display: flex;
   flex-direction: column;
   border-left: 2px solid #cccccc;
@@ -36,7 +36,6 @@ const CloseButton = styled.div`
   align-items: center;
   text-align: center;
   padding: 3px 3px;
-
   position: relative;
   > div {
     line-height: 1;
@@ -59,12 +58,17 @@ const Tab = styled.div`
   box-sizing: border-box;
   cursor: pointer;
   color: #323941;
-  &.is-active {
-    border-bottom: 2px solid #1974e8;
-  }
-  :not(.is-active):hover {
+  &:hover {
     background-color: #e6e6e6;
   }
+  ${(props) =>
+    props.active &&
+    css`
+      border-bottom: 2px solid #1974e8;
+      hover {
+        background-color: transparent;
+      }
+    `}
 `;
 
 const CodeText = styled.div`
@@ -86,6 +90,11 @@ const CodeText = styled.div`
       color: #bd433a;
     }
   }
+  ${(props) =>
+    props.topPadding &&
+    css`
+      padding-top: 8px;
+    `}
 `;
 
 function renderVariablesCount(variables) {
@@ -95,6 +104,10 @@ function renderVariablesCount(variables) {
   return `(${Object.keys(variables).length})`;
 }
 
+function renderErrorsCount(item) {
+  return item.errorsCount > 0 ? `(${item.errorsCount})` : "";
+}
+
 function getDefaultTab(item) {
   if (item.errorsCount > 0) {
     return "errors";
@@ -102,66 +115,63 @@ function getDefaultTab(item) {
   return "query";
 }
 
+// Try-hard copy of chrome devtool json explorer
+const JSONTreeTheme = {
+  scheme: "saturn",
+  author: "saturn",
+  base00: "#ffffff",
+  base01: "#ffffff",
+  base02: "#2e2e2e",
+  base03: "#2e2e2e",
+  base04: "#2e2e2e",
+  base05: "#2e2e2e",
+  base06: "#2e2e2e",
+  base07: "#2e2e2e",
+  base08: "#2e2e2e",
+  base09: "#0800cb",
+  base0A: "#2e2e2e",
+  base0B: "#bd433a",
+  base0C: "#878787",
+  base0D: "#81028a",
+  base0E: "#2e2e2e",
+  base0F: "#2e2e2e",
+};
+
 export function Sidebar(props) {
   const { item, onClose } = props;
   const [activeTab, setActiveTab] = useState(getDefaultTab(item));
 
-  // Try-hard copy of chrome devtool json explorer
-  const theme = {
-    scheme: "saturn",
-    author: "saturn",
-    base00: "#ffffff",
-    base01: "#ffffff",
-    base02: "#2e2e2e",
-    base03: "#2e2e2e",
-    base04: "#2e2e2e",
-    base05: "#2e2e2e",
-    base06: "#2e2e2e",
-    base07: "#2e2e2e",
-    base08: "#2e2e2e",
-    base09: "#0800cb",
-    base0A: "#2e2e2e",
-    base0B: "#bd433a",
-    base0C: "#878787",
-    base0D: "#81028a",
-    base0E: "#2e2e2e",
-    base0F: "#2e2e2e",
-  };
-
   return (
-    <SidebarS>
+    <SidebarStyled>
       <SidebarHeader>
         <CloseButton onClick={onClose}>
           <div>×</div>
         </CloseButton>
         <Tab
-          className={activeTab === "query" ? "is-active" : ""}
+          active={activeTab === "query"}
           onClick={() => setActiveTab("query")}
         >
           Query
         </Tab>
         <Tab
-          className={activeTab === "variables" ? "is-active" : ""}
+          active={activeTab === "variables"}
           onClick={() => setActiveTab("variables")}
         >
           Variables {renderVariablesCount(item.variables)}
         </Tab>
-        <Tab
-          className={activeTab === "data" ? "is-active" : ""}
-          onClick={() => setActiveTab("data")}
-        >
+        <Tab active={activeTab === "data"} onClick={() => setActiveTab("data")}>
           Data
         </Tab>
         <Tab
-          className={activeTab === "errors" ? "is-active" : ""}
+          active={activeTab === "errors"}
           onClick={() => setActiveTab("errors")}
         >
-          Errors {item.errorsCount > 0 ? `(${item.errorsCount})` : ""}
+          Errors {renderErrorsCount(item)}
         </Tab>
       </SidebarHeader>
       <SidebarContent>
         {activeTab === "query" && (
-          <CodeText style={{ paddingTop: "8px" }}>
+          <CodeText topPadding>
             <GraphqlCodeBlock
               className="graphql-syntax"
               queryBody={item.query}
@@ -171,7 +181,7 @@ export function Sidebar(props) {
         {activeTab === "variables" && (
           <CodeText>
             <JSONTree
-              theme={theme}
+              theme={JSONTreeTheme}
               // hideRoot={true}
               invertTheme={false}
               shouldExpandNode={() => true}
@@ -182,7 +192,7 @@ export function Sidebar(props) {
         {activeTab === "data" && (
           <CodeText>
             <JSONTree
-              theme={theme}
+              theme={JSONTreeTheme}
               hideRoot={true}
               invertTheme={false}
               shouldExpandNode={() => true}
@@ -193,7 +203,7 @@ export function Sidebar(props) {
         {activeTab === "errors" && (
           <CodeText>
             <JSONTree
-              theme={theme}
+              theme={JSONTreeTheme}
               hideRoot={true}
               invertTheme={false}
               shouldExpandNode={() => true}
@@ -202,6 +212,6 @@ export function Sidebar(props) {
           </CodeText>
         )}
       </SidebarContent>
-    </SidebarS>
+    </SidebarStyled>
   );
 }
