@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import {
   useTable,
   useBlockLayout,
@@ -21,18 +21,19 @@ const Table = styled.div`
   border-collapse: collapse;
   width: 100%;
   overflow-x: hidden;
-  .resizer {
-    display: inline-block;
-    width: 4px;
-    height: 100%;
-    position: absolute;
-    right: 0;
-    top: 0;
-    transform: translateX(50%);
-    z-index: 1;
-    touch-action: none;
-    cursor: col-resize !important;
-  }
+`;
+
+const Resizer = styled.span`
+  display: inline-block;
+  width: 4px;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: translateX(50%);
+  z-index: 1;
+  touch-action: none;
+  cursor: col-resize !important;
 `;
 
 const Header = styled.div`
@@ -53,9 +54,6 @@ const Header = styled.div`
   &:hover {
     background-color: #e6e6e6;
     cursor: pointer;
-  }
-  &.collapse {
-    width: 0.0000000001%;
   }
   .arrow {
     position: absolute;
@@ -90,16 +88,20 @@ const Row = styled.div`
   &:hover {
     background-color: #f2f6fc;
   }
-  &.has-error {
-    color: #d42d1f;
-  }
-  &.is-active {
-    background-color: #1974e8;
-    color: white !important;
-    span {
+  ${(props) =>
+    props.hasError &&
+    css`
+      color: #d42d1f !important;
+    `}
+  ${(props) =>
+    props.isActive &&
+    css`
+      background-color: #1974e8 !important;
       color: white !important;
-    }
-  }
+      span {
+        color: white !important;
+      }
+    `}
 `;
 
 const Cell = styled.div`
@@ -126,7 +128,7 @@ const SidebarWrapper = styled.div`
 
 const TBody = styled.div`
   overflow-y: scroll;
-  overflow-x: hidden;
+  overflow-x: auto;
   height: calc(100vh - 28px);
 `;
 
@@ -135,7 +137,7 @@ const columns = [
   { Header: "Type", width: 70, accessor: "type" },
   { Header: "Query", accessor: "query", Cell: QueryCell },
   { Header: "Variables", accessor: "variablesString", Cell: VariablesCell },
-  { Header: "Data", accessor: "dataString", Cell: DataCell },
+  { Header: "Data", accessor: "dataStringShort", Cell: DataCell },
   { Header: "Errors", accessor: "errorMessages", Cell: ErrorCell },
   { Header: "HTTP Status", width: 90, accessor: "status" },
 ];
@@ -163,9 +165,11 @@ class ErrorBoundary extends React.Component {
 function AppPure(props) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
+  const [initialTab, setInitialTab] = useState(null)
 
   const defaultColumnWidth =
-    (window.innerWidth - 70 - 90) / (columns.length - 2) - (activeRequestId ? 600 : 0);
+    (window.innerWidth - 70 - 90) / (columns.length - 2) -
+    (activeRequestId ? 600 : 0);
   const defaultColumn = React.useMemo(
     () => ({
       minWidth: 50,
@@ -200,14 +204,10 @@ function AppPure(props) {
           <Table>
             <div>
               {headerGroups.map((headerGroup) => (
-                <div {...headerGroup.getHeaderGroupProps()} className="tr">
+                <div {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
                     <Header
-                      {...column.getHeaderProps({
-                        className: column.collapse ? "collapse" : "",
-                        ...column.getSortByToggleProps(),
-                      })}
-                      className="th"
+                      {...column.getHeaderProps(column.getSortByToggleProps())}
                     >
                       {column.render("Header")}
 
@@ -221,12 +221,7 @@ function AppPure(props) {
                         ""
                       )}
 
-                      <div
-                        {...column.getResizerProps()}
-                        className={`resizer ${
-                          column.isResizing ? "isResizing" : ""
-                        }`}
-                      />
+                      <Resizer {...column.getResizerProps()} />
                     </Header>
                   ))}
                 </div>
@@ -234,40 +229,39 @@ function AppPure(props) {
             </div>
             <TBody
               {...getTableBodyProps()}
-              style={{
-                overFlowX: "auto",
-              }}
+              // On purpose, override ^ inline style
+              // style={{
+              //   overFlowX: "auto",
+              // }}
             >
               {rows.map((row, i) => {
                 prepareRow(row);
-                const hasError = row.original.errorsCount > 0;
+                const hasError =
+                  row.original.errorsCount > 0 ||
+                  row.original.status === "Cancelled";
                 const isActive = row.original.id === activeRequestId;
                 return (
                   <Row
                     {...row.getRowProps()}
-                    className={
-                      (hasError ? "has-error" : "") +
-                      (isActive ? " is-active" : "")
-                    }
-                    onClick={() => {
-                      setActiveRequestId(row.original.id);
-                    }}
+                    isActive={isActive}
+                    hasError={hasError}
                   >
-                    {row.cells.map((cell, index) => {
+                    {row.cells.map((cell) => {
                       return (
-                        <Cell
-                          {...cell.getCellProps({
-                            className: cell.column.collapse ? "collapse" : "",
-                          })}
-                          className="td"
-                        >
+                        <Cell {...cell.getCellProps()} onClick={() => {
+                          setActiveRequestId(row.original.id);
+                          const map = {
+                            'Query': 'query',
+                            'Variables': 'variables',
+                            'Data': 'data',
+                            'Errors': 'errors'
+                          }
+                          if (map[cell.column.Header]) {
+                            setInitialTab(map[cell.column.Header])
+                          }
+                        }}>
                           {cell.render("Cell")}
-                          <div
-                            {...cell.column.getResizerProps()}
-                            className={`resizer ${
-                              cell.column.isResizing ? "isResizing" : ""
-                            }`}
-                          />
+                          <Resizer {...cell.column.getResizerProps()} />
                         </Cell>
                       );
                     })}
@@ -281,6 +275,7 @@ function AppPure(props) {
       {activeRequestId && list.find((i) => i.id === activeRequestId) && (
         <SidebarWrapper>
           <Sidebar
+            initialTab={initialTab}
             item={list.find((i) => i.id === activeRequestId)}
             onClose={() => setActiveRequestId(null)}
           />

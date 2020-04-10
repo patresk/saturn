@@ -22,7 +22,7 @@ export function ErrorCell(props) {
 
 export function VariablesCell(props) {
   const val = props.cell.value;
-  if (!val || Object.keys(val).length === 0) {
+  if (!val || val === "{}") {
     return <LightGray>No variables</LightGray>;
   }
   return <TwoLineLayout title={val}>{val}</TwoLineLayout>;
@@ -30,7 +30,7 @@ export function VariablesCell(props) {
 
 export function DataCell(props) {
   const val = props.cell.value;
-  if (val === undefined || val === null) {
+  if (val === undefined || val === null || val === "") {
     return <LightGray>No data</LightGray>;
   }
   return <TwoLineLayout title={val}>{val}</TwoLineLayout>;

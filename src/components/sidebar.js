@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled, { css } from "styled-components";
 import JSONTree from "react-json-tree";
 import { GraphqlCodeBlock } from "graphql-syntax-highlighter-react";
@@ -138,8 +138,12 @@ const JSONTreeTheme = {
 };
 
 export function Sidebar(props) {
-  const { item, onClose } = props;
+  const { item, initialTab, onClose } = props;
   const [activeTab, setActiveTab] = useState(getDefaultTab(item));
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   return (
     <SidebarStyled>

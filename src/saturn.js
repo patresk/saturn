@@ -77,7 +77,7 @@ function Saturn() {
       status:
         item.raw.response.status === 0 ? "Cancelled" : item.raw.response.status,
       query: item.request.query ? item.request.query : "",
-      queryShort: item.request.query ? item.request.query.substring(0, 26) : "",
+      queryShort: item.request.query ? item.request.query.substring(0, 64) : "",
       type: item.request.query.substring(0, 26).trim().startsWith("mutation")
         ? "mutation"
         : "query",
@@ -98,13 +98,18 @@ function Saturn() {
         item.response && item.response.data
           ? JSON.stringify(item.response.data)
           : "",
+      dataStringShort:
+        item.response && item.response.data
+          ? JSON.stringify(item.response.data).substring(0, 64)
+          : "",
     };
   });
 
   console.log("raw", state.list);
   console.log("transformed", transformed);
 
-  return <App list={transformed} />;
+  // Since the virtualization is not implemented, only last 200 items are rendered
+  return <App list={transformed.slice(-100)} />;
 }
 
 ReactDOM.render(<Saturn />, document.getElementById("app"));

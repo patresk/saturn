@@ -26,9 +26,9 @@ export function EmptyState() {
       <p>
         <a
           target="_blank"
-          href="https://github.com/patresk/saturn/blob/master/src/panel.js#L10"
+          href="https://github.com/patresk/saturn/blob/master/src/saturn.js#L10"
         >
-          How GraphQL request is detected?
+          How is GraphQL request detected?
         </a>
       </p>
     </NonIdealState>
