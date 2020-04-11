@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled, { css } from "styled-components";
 import JSONTree from "react-json-tree";
 import { GraphqlCodeBlock } from "graphql-syntax-highlighter-react";
+import { LightGray } from "./cells";
 
 const SidebarStyled = styled.div`
   display: flex;
@@ -72,13 +73,16 @@ const Tab = styled.div`
 `;
 
 const CodeText = styled.div`
-  font-size: 12px;
-  font-family: monospace;
-  line-height: 1.1;
+  font-size: 11px;
+  font-family: Menlo, monospace;
+  line-height: 1.2;
 
   .graphql-syntax {
     pre {
-      margin: 4px 0;
+      margin: 3px 0;
+      font-size: 11px;
+      font-family: Menlo, monospace;
+      line-height: 1.2;
     }
     .number {
       color: #0800cb;
@@ -101,11 +105,18 @@ function renderVariablesCount(variables) {
   if (!variables) {
     return "";
   }
-  return `(${Object.keys(variables).length})`;
+  const count = Object.keys(variables).length;
+  if (count === 0) {
+    return <EmptyCount>({count})</EmptyCount>;
+  }
+  return `(${count})`;
 }
 
 function renderErrorsCount(item) {
-  return item.errorsCount > 0 ? `(${item.errorsCount})` : "";
+  if (item.errorsCount === 0) {
+    return <EmptyCount>({item.errorsCount})</EmptyCount>;
+  }
+  return `(${item.errorsCount})`;
 }
 
 function getDefaultTab(item) {
@@ -174,48 +185,82 @@ export function Sidebar(props) {
         </Tab>
       </SidebarHeader>
       <SidebarContent>
-        {activeTab === "query" && (
-          <CodeText topPadding>
-            <GraphqlCodeBlock
-              className="graphql-syntax"
-              queryBody={item.query}
-            />
-          </CodeText>
-        )}
-        {activeTab === "variables" && (
-          <CodeText>
-            <JSONTree
-              theme={JSONTreeTheme}
-              // hideRoot={true}
-              invertTheme={false}
-              shouldExpandNode={() => true}
-              data={item.variables}
-            />
-          </CodeText>
-        )}
-        {activeTab === "data" && (
-          <CodeText>
-            <JSONTree
-              theme={JSONTreeTheme}
-              hideRoot={true}
-              invertTheme={false}
-              shouldExpandNode={() => true}
-              data={item.data}
-            />
-          </CodeText>
-        )}
-        {activeTab === "errors" && (
-          <CodeText>
-            <JSONTree
-              theme={JSONTreeTheme}
-              hideRoot={true}
-              invertTheme={false}
-              shouldExpandNode={() => true}
-              data={item.errors}
-            />
-          </CodeText>
-        )}
+        {activeTab === "query" && <QueryTab item={item} />}
+        {activeTab === "variables" && <VariablesTab item={item} />}
+        {activeTab === "data" && <DataTab item={item} />}
+        {activeTab === "errors" && <ErrorsTab item={item} />}
       </SidebarContent>
     </SidebarStyled>
+  );
+}
+
+const EmptyState = styled.div`
+  color: #7c7c7c;
+  margin-top: 6px;
+`;
+
+const EmptyCount = styled.span`
+  color: #7c7c7c;
+`;
+
+function VariablesTab({ item }) {
+  if (!item.variables || Object.keys(item.variables).length === 0) {
+    return <EmptyState>No variables</EmptyState>;
+  }
+  return (
+    <CodeText>
+      <JSONTree
+        theme={JSONTreeTheme}
+        hideRoot={false}
+        invertTheme={false}
+        shouldExpandNode={() => true}
+        data={item.variables}
+      />
+    </CodeText>
+  );
+}
+
+function QueryTab({ item }) {
+  if (item.query === undefined || item.query === null) {
+    return <EmptyState>No query</EmptyState>;
+  }
+  return (
+    <CodeText topPadding>
+      <GraphqlCodeBlock className="graphql-syntax" queryBody={item.query} />
+    </CodeText>
+  );
+}
+
+function ErrorsTab({ item }) {
+  if (item.errors === undefined || item.errors === null) {
+    return <EmptyState>No errors</EmptyState>;
+  }
+  return (
+    <CodeText>
+      <JSONTree
+        theme={JSONTreeTheme}
+        hideRoot={true}
+        invertTheme={false}
+        shouldExpandNode={() => true}
+        data={item.errors}
+      />
+    </CodeText>
+  );
+}
+
+function DataTab({ item }) {
+  if (item.data === undefined || item.data === null || item.data === "") {
+    return <EmptyState>No data</EmptyState>;
+  }
+  return (
+    <CodeText>
+      <JSONTree
+        theme={JSONTreeTheme}
+        hideRoot={true}
+        invertTheme={false}
+        shouldExpandNode={() => true}
+        data={item.data}
+      />
+    </CodeText>
   );
 }

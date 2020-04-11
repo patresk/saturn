@@ -10,17 +10,22 @@ import { Sidebar } from "./sidebar";
 import { EmptyState, ErrorState } from "./non-ideal-states";
 import { DataCell, ErrorCell, QueryCell, VariablesCell } from "./cells";
 
+const Container = styled.div`
+  display: flex;
+  flex-flow: row nowrap;
+  height: 100vh;
+  overflow: hidden;
+`;
+
 const TableWrapper = styled.div`
   width: 100%;
-  flex-grow: 1;
   overflow-x: auto;
+  overflow-y: auto;
 `;
 
 const Table = styled.div`
   border-spacing: 0;
   border-collapse: collapse;
-  width: 100%;
-  overflow-x: hidden;
 `;
 
 const Resizer = styled.span`
@@ -115,21 +120,22 @@ const Cell = styled.div`
   overflow: hidden;
 `;
 
-const Container = styled.div`
-  display: flex;
-  flex-flow: row nowrap;
-`;
-
 const SidebarWrapper = styled.div`
-  min-width: 600px;
+  min-width: 50vw;
+  max-width: 50vw;
   flex-grow: 1;
   flex-direction: column;
+`;
+
+const THead = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 999;
 `;
 
 const TBody = styled.div`
   overflow-y: scroll;
   overflow-x: auto;
-  height: calc(100vh - 28px);
 `;
 
 const columns = [
@@ -165,7 +171,7 @@ class ErrorBoundary extends React.Component {
 function AppPure(props) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
-  const [initialTab, setInitialTab] = useState(null)
+  const [initialTab, setInitialTab] = useState(null);
 
   const defaultColumnWidth =
     (window.innerWidth - 70 - 90) / (columns.length - 2) -
@@ -181,6 +187,7 @@ function AppPure(props) {
 
   const {
     getTableProps,
+    getTableHeaderProps,
     getTableBodyProps,
     headerGroups,
     rows,
@@ -196,13 +203,15 @@ function AppPure(props) {
     useSortBy
   );
 
+  const tableWidth = headerGroups[0].getHeaderGroupProps().style.width;
+
   return (
     <Container>
       {list.length === 0 && <EmptyState />}
       {list.length > 0 && (
         <TableWrapper>
-          <Table>
-            <div>
+          <Table style={{ width: tableWidth }}>
+            <THead style={{ width: tableWidth }}>
               {headerGroups.map((headerGroup) => (
                 <div {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
@@ -226,15 +235,9 @@ function AppPure(props) {
                   ))}
                 </div>
               ))}
-            </div>
-            <TBody
-              {...getTableBodyProps()}
-              // On purpose, override ^ inline style
-              // style={{
-              //   overFlowX: "auto",
-              // }}
-            >
-              {rows.map((row, i) => {
+            </THead>
+            <TBody style={{ width: tableWidth, overflowX: "hidden" }}>
+              {rows.map((row) => {
                 prepareRow(row);
                 const hasError =
                   row.original.errorsCount > 0 ||
@@ -248,18 +251,21 @@ function AppPure(props) {
                   >
                     {row.cells.map((cell) => {
                       return (
-                        <Cell {...cell.getCellProps()} onClick={() => {
-                          setActiveRequestId(row.original.id);
-                          const map = {
-                            'Query': 'query',
-                            'Variables': 'variables',
-                            'Data': 'data',
-                            'Errors': 'errors'
-                          }
-                          if (map[cell.column.Header]) {
-                            setInitialTab(map[cell.column.Header])
-                          }
-                        }}>
+                        <Cell
+                          {...cell.getCellProps()}
+                          onClick={() => {
+                            setActiveRequestId(row.original.id);
+                            const map = {
+                              Query: "query",
+                              Variables: "variables",
+                              Data: "data",
+                              Errors: "errors",
+                            };
+                            if (map[cell.column.Header]) {
+                              setInitialTab(map[cell.column.Header]);
+                            }
+                          }}
+                        >
                           {cell.render("Cell")}
                           <Resizer {...cell.column.getResizerProps()} />
                         </Cell>
