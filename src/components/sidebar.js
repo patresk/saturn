@@ -153,7 +153,9 @@ export function Sidebar(props) {
   const [activeTab, setActiveTab] = useState(getDefaultTab(item));
 
   useEffect(() => {
-    setActiveTab(initialTab);
+    if (initialTab !== null) {
+      setActiveTab(initialTab);
+    }
   }, [initialTab]);
 
   return (
