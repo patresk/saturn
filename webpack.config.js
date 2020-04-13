@@ -31,6 +31,7 @@ module.exports = {
       { from: "src/devtools.html", to: "devtools.html" },
       { from: "src/dev.html", to: "dev.html" },
       { from: "src/manifest.json", to: "manifest.json" },
+      { from: "src/images", to: "images" },
     ]),
     // Believe or not, this plugin is required to properly render emojis in Chrome extensions.
     new BomPlugin(true)
