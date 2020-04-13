@@ -1,8 +1,12 @@
 # Saturn
 
-Saturn is a Chrome DevTools extension to debug GraphQL queries. Acts like a Network tab, but for GraphQL requests only.
+Saturn is a [Chrome DevTools](https://chrome.google.com/webstore/detail/saturn/niddeggaegffgancpopjccbmmhpdfflf) extension to debug GraphQL queries. Acts like a Network tab, but for GraphQL requests only.
 
-## How to build & use
+![screenshot](screen-1.png)
+
+![screenshot 2](screen-2.png)
+
+## How to dev
 
 ```
 $ yarn install
