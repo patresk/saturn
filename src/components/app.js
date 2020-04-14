@@ -1,20 +1,25 @@
-import React, { useState } from "react";
-import styled, { css } from "styled-components";
+﻿import React, { useState } from "react";
+import styled, { css, ThemeProvider } from "styled-components";
 import {
   useTable,
   useBlockLayout,
   useResizeColumns,
   useSortBy,
 } from "react-table";
+
 import { Sidebar } from "./sidebar";
 import { EmptyState, ErrorState } from "./non-ideal-states";
 import { DataCell, ErrorCell, QueryCell, VariablesCell } from "./cells";
+import darkTheme from "./themes/dark";
+import lightTheme from "./themes/light";
 
 const Container = styled.div`
   display: flex;
   flex-flow: row nowrap;
   height: 100vh;
   overflow: hidden;
+  background-color: ${(props) => props.theme.colors.background};
+  color: ${(props) => props.theme.colors.color};
 `;
 
 const TableWrapper = styled.div`
@@ -42,22 +47,22 @@ const Resizer = styled.span`
 `;
 
 const Header = styled.div`
-  background-color: #f3f3f3;
+  background-color: ${(props) => props.theme.colors.tableHeaderBackground};
   height: 28px;
   padding: 0 6px;
   font-size: 12px;
   font-weight: normal;
   text-align: left;
   margin: 0;
-  border-right: 1px solid #cdcdcd;
-  border-bottom: 1px solid #cdcdcd;
+  border-right: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
+  border-bottom: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
   border-top: 0;
-  color: #323941;
+  color: ${(props) => props.theme.colors.color};
   display: flex !important;
   align-items: center;
   veritcal-align: middle;
   &:hover {
-    background-color: #e6e6e6;
+    background-color: ${(props) => props.theme.colors.tableHeaderHover};
     cursor: pointer;
   }
   .arrow {
@@ -70,38 +75,39 @@ const Header = styled.div`
     height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-bottom: 7px solid #6e6e6e;
+    border-bottom: 7px solid ${(props) => props.theme.colors.color};
   }
   .arrow-down {
     width: 0;
     height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-top: 7px solid #6e6e6e;
+    border-top: 7px solid ${(props) => props.theme.colors.color};
   }
 `;
 
 const Row = styled.div`
   cursor: pointer;
-  color: #323941;
+  color: ${(props) => props.theme.colors.color};
   &:nth-child(2n) {
-    background-color: #f5f5f5;
+    background-color: ${(props) => props.theme.colors.tableRowStripe};
   }
   &:nth-child(n):last-child {
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
   }
   &:hover {
-    background-color: #f2f6fc;
+    background-color: ${(props) => props.theme.colors.tableRowHover};
   }
   ${(props) =>
-    props.hasError &&
-    css`
+  props.hasError &&
+  css`
       color: #d42d1f !important;
     `}
   ${(props) =>
-    props.isActive &&
-    css`
-      background-color: #1974e8 !important;
+  props.isActive &&
+  css`
+      background-color: ${(props) =>
+    props.theme.colors.tableRowActive} !important;
       color: white !important;
       span {
         color: white !important;
@@ -113,7 +119,7 @@ const Cell = styled.div`
   padding: 0 6px;
   font-size: 12px;
   height: 38px;
-  border-right: 1px solid #e1e1e1;
+  border-right: 1px solid ${(props) => props.theme.colors.tableCellBorder};
   position: relative;
   display: flex !important;
   align-items: center;
@@ -185,6 +191,8 @@ function AppPure(props) {
     []
   );
 
+  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
   const {
     getTableProps,
     getTableHeaderProps,
@@ -206,88 +214,93 @@ function AppPure(props) {
   const tableWidth = headerGroups[0].getHeaderGroupProps().style.width;
 
   return (
-    <Container>
-      {list.length === 0 && <EmptyState />}
-      {list.length > 0 && (
-        <TableWrapper>
-          <Table style={{ width: tableWidth }}>
-            <THead style={{ width: tableWidth }}>
-              {headerGroups.map((headerGroup) => (
-                <div {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <Header
-                      {...column.getHeaderProps(column.getSortByToggleProps())}
-                    >
-                      {column.render("Header")}
+    <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+      <Container>
+        {list.length === 0 && <EmptyState />}
+        {list.length > 0 && (
+          <TableWrapper>
+            <Table style={{ width: tableWidth }}>
+              <THead style={{ width: tableWidth }}>
+                {headerGroups.map((headerGroup) => (
+                  <div {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <Header
+                        {...column.getHeaderProps(
+                          column.getSortByToggleProps()
+                        )}
+                      >
+                        {column.render("Header")}
 
-                      {column.isSorted ? (
-                        column.isSortedDesc ? (
-                          <div className="arrow arrow-down"></div>
+                        {column.isSorted ? (
+                          column.isSortedDesc ? (
+                            <div className="arrow arrow-down"></div>
+                          ) : (
+                            <div className="arrow arrow-up"></div>
+                          )
                         ) : (
-                          <div className="arrow arrow-up"></div>
-                        )
-                      ) : (
-                        ""
-                      )}
+                          ""
+                        )}
 
-                      <Resizer {...column.getResizerProps()} />
-                    </Header>
-                  ))}
-                </div>
-              ))}
-            </THead>
-            <TBody style={{ width: tableWidth, overflowX: "hidden" }}>
-              {rows.map((row) => {
-                prepareRow(row);
-                const hasError =
-                  row.original.errorsCount > 0 ||
-                  row.original.status === "Cancelled";
-                const isActive = row.original.id === activeRequestId;
-                return (
-                  <Row
-                    {...row.getRowProps()}
-                    isActive={isActive}
-                    hasError={hasError}
-                  >
-                    {row.cells.map((cell) => {
-                      return (
-                        <Cell
-                          {...cell.getCellProps()}
-                          onClick={() => {
-                            setActiveRequestId(row.original.id);
-                            const map = {
-                              Query: "query",
-                              Variables: "variables",
-                              Data: "data",
-                              Errors: "errors",
-                            };
-                            if (map[cell.column.Header]) {
-                              setInitialTab(map[cell.column.Header]);
-                            }
-                          }}
-                        >
-                          {cell.render("Cell")}
-                          <Resizer {...cell.column.getResizerProps()} />
-                        </Cell>
-                      );
-                    })}
-                  </Row>
-                );
-              })}
-            </TBody>
-          </Table>
-        </TableWrapper>
-      )}
-      {activeRequestId && list.find((i) => i.id === activeRequestId) && (
-        <SidebarWrapper>
-          <Sidebar
-            initialTab={initialTab}
-            item={list.find((i) => i.id === activeRequestId)}
-            onClose={() => setActiveRequestId(null)}
-          />
-        </SidebarWrapper>
-      )}
-    </Container>
+                        <Resizer {...column.getResizerProps()} />
+                      </Header>
+                    ))}
+                  </div>
+                ))}
+              </THead>
+              <TBody style={{ width: tableWidth, overflowX: "hidden" }}>
+                {rows.map((row) => {
+                  prepareRow(row);
+                  const hasError =
+                    row.original.errorsCount > 0 ||
+                    row.original.status === "Cancelled";
+                  const isActive = row.original.id === activeRequestId;
+                  return (
+                    <Row
+                      {...row.getRowProps()}
+                      isActive={isActive}
+                      hasError={hasError}
+                    >
+                      {row.cells.map((cell) => {
+                        return (
+                          <Cell
+                            {...cell.getCellProps()}
+                            onClick={() => {
+                              setActiveRequestId(row.original.id);
+                              const map = {
+                                Query: "query",
+                                Variables: "variables",
+                                Data: "data",
+                                Errors: "errors",
+                              };
+                              if (map[cell.column.Header]) {
+                                setInitialTab(map[cell.column.Header]);
+                              }
+                            }}
+                          >
+                            {cell.render("Cell")}
+                            <Resizer {...cell.column.getResizerProps()} />
+                          </Cell>
+                        );
+                      })}
+                    </Row>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </TableWrapper>
+        )}
+        {activeRequestId && list.find((i) => i.id === activeRequestId) && (
+          <SidebarWrapper>
+            <Sidebar
+              isDarkMode={isDarkMode}
+              initialTab={initialTab}
+              item={list.find((i) => i.id === activeRequestId)}
+              onClose={() => setActiveRequestId(null)}
+            />
+          </SidebarWrapper>
+        )}
+      </Container>
+    </ThemeProvider>
   );
 }
 

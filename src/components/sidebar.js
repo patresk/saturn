@@ -3,18 +3,20 @@ import styled, { css } from "styled-components";
 import JSONTree from "react-json-tree";
 import { GraphqlCodeBlock } from "graphql-syntax-highlighter-react";
 import { LightGray } from "./cells";
+import darkTheme from "./themes/dark";
+import lightTheme from "./themes/light";
 
 const SidebarStyled = styled.div`
   display: flex;
   flex-direction: column;
-  border-left: 2px solid #cccccc;
+  border-left: 2px solid ${(props) => props.theme.colors.sidebarBorderColor};
 `;
 
 const SidebarHeader = styled.div`
   width: 100%;
   height: 28px;
-  border-bottom: 1px solid #cccccc;
-  background-color: #f3f3f3;
+  border-bottom: 1px solid ${(props) => props.theme.colors.tableCellBorder};
+  background-color: ${(props) => props.theme.colors.tableHeaderBackground};
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -58,14 +60,15 @@ const Tab = styled.div`
   padding: 0px 10px;
   box-sizing: border-box;
   cursor: pointer;
-  color: #323941;
+  color: ${(props) => props.theme.colors.tabColor};
   &:hover {
-    background-color: #e6e6e6;
+    background-color: ${(props) => props.theme.colors.tabHoverBackgroundColor};
   }
   ${(props) =>
     props.active &&
     css`
       border-bottom: 2px solid #1974e8;
+      background-color: ${(props) => props.theme.colors.tabBackgroundColor};
       hover {
         background-color: transparent;
       }
@@ -85,13 +88,13 @@ const CodeText = styled.div`
       line-height: 1.2;
     }
     .number {
-      color: #0800cb;
+      color: ${(props) => props.theme.colors.jsonNumber};
     }
     .property {
-      color: #81028a;
+      color: ${(props) => props.theme.colors.jsonProperty};
     }
     .keyword {
-      color: #bd433a;
+      color: ${(props) => props.theme.colors.jsonKeyword};
     }
   }
   ${(props) =>
@@ -99,6 +102,15 @@ const CodeText = styled.div`
     css`
       padding-top: 8px;
     `}
+`;
+
+const EmptyState = styled.div`
+  color: #7c7c7c;
+  margin-top: 6px;
+`;
+
+const EmptyCount = styled.span`
+  color: #7c7c7c;
 `;
 
 function renderVariablesCount(variables) {
@@ -126,28 +138,6 @@ function getDefaultTab(item) {
   return "query";
 }
 
-// Try-hard copy of chrome devtool json explorer
-const JSONTreeTheme = {
-  scheme: "saturn",
-  author: "saturn",
-  base00: "#ffffff",
-  base01: "#ffffff",
-  base02: "#2e2e2e",
-  base03: "#2e2e2e",
-  base04: "#2e2e2e",
-  base05: "#2e2e2e",
-  base06: "#2e2e2e",
-  base07: "#2e2e2e",
-  base08: "#2e2e2e",
-  base09: "#0800cb",
-  base0A: "#2e2e2e",
-  base0B: "#bd433a",
-  base0C: "#878787",
-  base0D: "#81028a",
-  base0E: "#2e2e2e",
-  base0F: "#2e2e2e",
-};
-
 export function Sidebar(props) {
   const { item, initialTab, onClose } = props;
   const [activeTab, setActiveTab] = useState(getDefaultTab(item));
@@ -157,6 +147,30 @@ export function Sidebar(props) {
       setActiveTab(initialTab);
     }
   }, [initialTab]);
+
+  const theme = props.isDarkMode ? darkTheme : lightTheme
+
+  // Try-hard copy of chrome devtool json explorer
+  const JSONTreeTheme = {
+    scheme: "saturn",
+    author: "saturn",
+    base00: theme.colors.background,
+    base01: theme.colors.background,
+    base02: theme.colors.jsonText,
+    base03: theme.colors.jsonText,
+    base04: theme.colors.jsonText,
+    base05: theme.colors.jsonText,
+    base06: theme.colors.jsonText,
+    base07: theme.colors.jsonText,
+    base08: theme.colors.jsonText,
+    base09: theme.colors.jsonNumber,
+    base0A: theme.colors.jsonText,
+    base0B: theme.colors.jsonKeyword,
+    base0C: "#878787",
+    base0D: theme.colors.jsonProperty,
+    base0E: theme.colors.jsonText,
+    base0F: theme.colors.jsonText,
+  };
 
   return (
     <SidebarStyled>
@@ -187,32 +201,29 @@ export function Sidebar(props) {
         </Tab>
       </SidebarHeader>
       <SidebarContent>
-        {activeTab === "query" && <QueryTab item={item} />}
-        {activeTab === "variables" && <VariablesTab item={item} />}
-        {activeTab === "data" && <DataTab item={item} />}
-        {activeTab === "errors" && <ErrorsTab item={item} />}
+        {activeTab === "query" && (
+          <QueryTab theme={JSONTreeTheme} item={item} />
+        )}
+        {activeTab === "variables" && (
+          <VariablesTab theme={JSONTreeTheme} item={item} />
+        )}
+        {activeTab === "data" && <DataTab theme={JSONTreeTheme} item={item} />}
+        {activeTab === "errors" && (
+          <ErrorsTab theme={JSONTreeTheme} item={item} />
+        )}
       </SidebarContent>
     </SidebarStyled>
   );
 }
 
-const EmptyState = styled.div`
-  color: #7c7c7c;
-  margin-top: 6px;
-`;
-
-const EmptyCount = styled.span`
-  color: #7c7c7c;
-`;
-
-function VariablesTab({ item }) {
+function VariablesTab({ item, theme }) {
   if (!item.variables || Object.keys(item.variables).length === 0) {
     return <EmptyState>No variables</EmptyState>;
   }
   return (
     <CodeText>
       <JSONTree
-        theme={JSONTreeTheme}
+        theme={theme}
         hideRoot={false}
         invertTheme={false}
         shouldExpandNode={() => true}
@@ -233,14 +244,14 @@ function QueryTab({ item }) {
   );
 }
 
-function ErrorsTab({ item }) {
+function ErrorsTab({ item, theme }) {
   if (item.errors === undefined || item.errors === null) {
     return <EmptyState>No errors</EmptyState>;
   }
   return (
     <CodeText>
       <JSONTree
-        theme={JSONTreeTheme}
+        theme={theme}
         hideRoot={true}
         invertTheme={false}
         shouldExpandNode={() => true}
@@ -250,14 +261,14 @@ function ErrorsTab({ item }) {
   );
 }
 
-function DataTab({ item }) {
+function DataTab({ item, theme }) {
   if (item.data === undefined || item.data === null || item.data === "") {
     return <EmptyState>No data</EmptyState>;
   }
   return (
     <CodeText>
       <JSONTree
-        theme={JSONTreeTheme}
+        theme={theme}
         hideRoot={true}
         invertTheme={false}
         shouldExpandNode={() => true}
