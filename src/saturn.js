@@ -38,6 +38,8 @@ function reducer(state, action) {
   switch (action.type) {
     case "add":
       return { list: state.list.concat(action.payload) };
+    case "clear":
+      return { list: [] };
     default:
       throw new Error();
   }
@@ -108,8 +110,13 @@ function Saturn() {
   console.log("raw", state.list);
   console.log("transformed", transformed);
 
-  // Since the virtualization is not implemented, only last 200 items are rendered
-  return <App list={transformed.slice(-100)} />;
+  // Since the virtualization is not implemented, only last 100 items are rendered
+  return (
+    <App
+      list={transformed.slice(-100)}
+      onClear={() => dispatch({ type: "clear" })}
+    />
+  );
 }
 
 ReactDOM.render(<Saturn />, document.getElementById("app"));
