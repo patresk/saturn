@@ -28,23 +28,22 @@ const Toolbar = styled.div`
   color: ${(props) => props.theme.colors.color};
   height: 22px;
   padding: 1px;
-  background-color: ${(props) => props.theme.colors.tabHoverBackgroundColor};
+  background-color: ${(props) => props.theme.colors.toolbarBackgroundColor};
   border-bottom: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
 `;
 
 const FilterInput = styled.input`
   height: 20px;
   min-height: 10px !important;
-  border: none;
   background-color: ${(props) => props.theme.colors.background};
   color: ${(props) => props.theme.colors.color};
   border-radius: 0;
-  border: 1px solid transparent;
+  border: 1px solid white !important;
   &:hover {
-    border: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
+    border: 1px solid ${(props) => props.theme.colors.tableHeaderBorder} !important;
   }
-  &:active {
-    border: 1px solid ${(props) => props.theme.colors.tableRowActive};
+  &:focus {
+    border: 1px solid ${(props) => props.theme.colors.tableRowActive} !important;
   }
 `;
 
@@ -213,6 +212,10 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+function escapeRegex(string) {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
 function AppPure(props) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
@@ -236,10 +239,7 @@ function AppPure(props) {
   const filteredList = useMemo(() => {
     return filter.length > 0
       ? list.filter((item) =>
-          // TODO: regex?
-          (item.operationName || "")
-            .toLowerCase()
-            .includes(filter.toLowerCase())
+          (item.operationName || "").match(RegExp(escapeRegex(filter), "i"))
         )
       : list;
   }, [filter, list]);

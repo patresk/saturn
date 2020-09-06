@@ -13,9 +13,10 @@
     tabBackgroundColor: "#000000",
     tabHoverBackgroundColor: "#202020",
     tabColor: "#a5a5a5",
+    toolbarBackgroundColor: "#202020",
     jsonText: "#bfc6ce",
     jsonNumber: "#9484f7",
     jsonProperty: "#d478e6",
-    jsonKeyword: "#d84d44"
+    jsonKeyword: "#d84d44",
   },
 };
