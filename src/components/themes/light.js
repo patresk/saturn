@@ -13,6 +13,7 @@
     tabBackgroundColor: "transparent",
     tabHoverBackgroundColor: "#e6e6e6",
     tabColor: "#323941",
+    toolbarBackgroundColor: "#f3f3f3",
     jsonText: "#2e2e2e",
     jsonNumber: "#0800cb",
     jsonProperty: "#81028a",

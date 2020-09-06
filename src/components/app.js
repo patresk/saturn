@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useMemo } from "react";
 import styled, { css, ThemeProvider } from "styled-components";
 import {
   useTable,
@@ -20,6 +20,44 @@ const Container = styled.div`
   overflow: hidden;
   background-color: ${(props) => props.theme.colors.background};
   color: ${(props) => props.theme.colors.color};
+`;
+
+const Toolbar = styled.div`
+  display: flex;
+  align-items: center;
+  color: ${(props) => props.theme.colors.color};
+  height: 22px;
+  padding: 1px;
+  background-color: ${(props) => props.theme.colors.toolbarBackgroundColor};
+  border-bottom: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
+`;
+
+const FilterInput = styled.input`
+  height: 20px;
+  min-height: 10px !important;
+  background-color: ${(props) => props.theme.colors.background};
+  color: ${(props) => props.theme.colors.color};
+  border-radius: 0;
+  border: 1px solid white !important;
+  &:hover {
+    border: 1px solid ${(props) => props.theme.colors.tableHeaderBorder} !important;
+  }
+  &:focus {
+    border: 1px solid ${(props) => props.theme.colors.tableRowActive} !important;
+  }
+`;
+
+const ClearButton = styled.a`
+  background: none;
+  background-image: none;
+  border: none;
+  width: 16px;
+  padding: 4px;
+  cursor: pointer;
+  color: ${(props) => props.theme.colors.color};
+  &:hover {
+    color: ${(props) => props.theme.colors.color};
+  }
 `;
 
 const TableWrapper = styled.div`
@@ -99,15 +137,15 @@ const Row = styled.div`
     background-color: ${(props) => props.theme.colors.tableRowHover};
   }
   ${(props) =>
-  props.hasError &&
-  css`
+    props.hasError &&
+    css`
       color: #d42d1f !important;
     `}
   ${(props) =>
-  props.isActive &&
-  css`
+    props.isActive &&
+    css`
       background-color: ${(props) =>
-    props.theme.colors.tableRowActive} !important;
+        props.theme.colors.tableRowActive} !important;
       color: white !important;
       span {
         color: white !important;
@@ -174,14 +212,20 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+function escapeRegex(string) {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
 function AppPure(props) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
   const [initialTab, setInitialTab] = useState(null);
+  const [filter, setFilter] = useState("");
 
   const defaultColumnWidth =
     (window.innerWidth - 70 - 90) / (columns.length - 2) -
     (activeRequestId ? 600 : 0);
+
   const defaultColumn = React.useMemo(
     () => ({
       minWidth: 50,
@@ -192,6 +236,13 @@ function AppPure(props) {
   );
 
   const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const filteredList = useMemo(() => {
+    return filter.length > 0
+      ? list.filter((item) =>
+          (item.operationName || "").match(RegExp(escapeRegex(filter), "i"))
+        )
+      : list;
+  }, [filter, list]);
 
   const {
     getTableProps,
@@ -203,7 +254,7 @@ function AppPure(props) {
   } = useTable(
     {
       columns,
-      data: list,
+      data: filteredList,
       defaultColumn,
     },
     useBlockLayout,
@@ -215,6 +266,30 @@ function AppPure(props) {
 
   return (
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+      <Toolbar>
+        <ClearButton
+          title="Clear"
+          onClick={() => {
+            if (props.onClear) {
+              props.onClear();
+            }
+          }}
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z"
+              clipRule="evenodd"
+            ></path>
+          </svg>
+        </ClearButton>
+        <FilterInput
+          placeholder="Filter"
+          type="text"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+      </Toolbar>
       <Container>
         {list.length === 0 && <EmptyState />}
         {list.length > 0 && (
