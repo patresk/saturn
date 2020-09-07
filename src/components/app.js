@@ -16,7 +16,7 @@ import lightTheme from "./themes/light";
 const Container = styled.div`
   display: flex;
   flex-flow: row nowrap;
-  height: 100vh;
+  height: calc(100vh - 25px);
   overflow: hidden;
   background-color: ${(props) => props.theme.colors.background};
   color: ${(props) => props.theme.colors.color};
