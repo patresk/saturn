@@ -239,7 +239,8 @@ function AppPure(props) {
   const filteredList = useMemo(() => {
     return filter.length > 0
       ? list.filter((item) =>
-          (item.operationName || "").match(RegExp(escapeRegex(filter), "i"))
+          // Search in GraphQL operation name and variables
+          ((item.operationName || "") + item.variablesString).match(RegExp(escapeRegex(filter), "i"))
         )
       : list;
   }, [filter, list]);
