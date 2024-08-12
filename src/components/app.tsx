@@ -1,17 +1,50 @@
-﻿import React, { useState, useMemo } from "react";
-import styled, { css, ThemeProvider } from "styled-components";
+﻿import React, { useState, useMemo, ReactNode } from 'react';
+import styled, { css, ThemeProvider } from 'styled-components';
 import {
   useTable,
   useBlockLayout,
   useResizeColumns,
   useSortBy,
-} from "react-table";
+} from 'react-table';
 
-import { Sidebar } from "./sidebar";
-import { EmptyState, ErrorState } from "./non-ideal-states";
-import { DataCell, ErrorCell, QueryCell, VariablesCell } from "./cells";
-import darkTheme from "./themes/dark";
-import lightTheme from "./themes/light";
+import { Sidebar } from './sidebar';
+import { EmptyState, ErrorState } from './non-ideal-states';
+import {
+  DataCell,
+  ErrorCell,
+  QueryCell,
+  TimeCell,
+  VariablesCell,
+} from './cells';
+import darkTheme from './themes/dark';
+import lightTheme from './themes/light';
+
+export interface ListItem {
+  id: string;
+  time?: Date;
+  operationName: string;
+  status: string;
+
+  query: string;
+  queryShort: string;
+
+  type: 'query' | 'mutation' | 'subscription' | 'subscription data';
+  variables?: any;
+  variablesString?: string;
+
+  data?: any;
+  dataString?: string;
+  dataStringShort?: string;
+
+  errors: Array<any>;
+  errorMessages: string[];
+  errorsCount?: number;
+}
+
+interface AppProps {
+  list: ListItem[];
+  onClear: () => void;
+}
 
 const Container = styled.div`
   display: flex;
@@ -25,6 +58,7 @@ const Container = styled.div`
 const Toolbar = styled.div`
   display: flex;
   align-items: center;
+  gap: 4px;
   color: ${(props) => props.theme.colors.color};
   height: 22px;
   padding: 1px;
@@ -45,6 +79,22 @@ const FilterInput = styled.input`
   &:focus {
     border: 1px solid ${(props) => props.theme.colors.tableRowActive} !important;
   }
+`;
+
+const FilterButton = styled.div<{ isActive?: boolean }>`
+  border-radius: 8px;
+  font-size: 11px;
+  background: ${(props) =>
+    props.isActive
+      ? props.theme.colors.tableRowActive
+      : props.theme.colors.toolbarBackgroundColor};
+  border: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
+  padding-top: 0px;
+  padding-bottom: 0px;
+  line-height: 12px;
+  cursor: pointer;
+  padding: 3px 6px;
+  color: ${(props) => (props.isActive ? 'white' : undefined)};
 `;
 
 const ClearButton = styled.a`
@@ -98,7 +148,7 @@ const Header = styled.div`
   color: ${(props) => props.theme.colors.color};
   display: flex !important;
   align-items: center;
-  veritcal-align: middle;
+  vertical-align: middle;
   &:hover {
     background-color: ${(props) => props.theme.colors.tableHeaderHover};
     cursor: pointer;
@@ -124,7 +174,7 @@ const Header = styled.div`
   }
 `;
 
-const Row = styled.div`
+const Row = styled.div<{ hasError: boolean; isActive: boolean }>`
   cursor: pointer;
   color: ${(props) => props.theme.colors.color};
   &:nth-child(2n) {
@@ -183,22 +233,23 @@ const TBody = styled.div`
 `;
 
 const columns = [
-  { Header: "Operation name", accessor: "operationName" },
-  { Header: "Type", width: 70, accessor: "type" },
-  { Header: "Query", accessor: "query", Cell: QueryCell },
-  { Header: "Variables", accessor: "variablesString", Cell: VariablesCell },
-  { Header: "Data", accessor: "dataStringShort", Cell: DataCell },
-  { Header: "Errors", accessor: "errorMessages", Cell: ErrorCell },
-  { Header: "HTTP Status", width: 90, accessor: "status" },
+  { Header: 'Operation name', accessor: 'operationName' },
+  { Header: 'Received at', width: 130, accessor: 'time', Cell: TimeCell },
+  { Header: 'Op. Type', width: 110, accessor: 'type' },
+  { Header: 'Op. Definition', accessor: 'query', Cell: QueryCell },
+  { Header: 'Variables', accessor: 'variablesString', Cell: VariablesCell },
+  { Header: 'Data', accessor: 'dataStringShort', Cell: DataCell },
+  { Header: 'Errors', accessor: 'errorMessages', Cell: ErrorCell },
+  { Header: 'HTTP Status', width: 90, accessor: 'status' },
 ];
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+class ErrorBoundary extends React.Component<any, { hasError: boolean }> {
+  constructor(props: any) {
     super(props);
     this.state = { hasError: false };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error) {
     console.error(error);
     this.setState({ hasError: true });
   }
@@ -212,15 +263,25 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function escapeRegex(string) {
-  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+function escapeRegex(string: string) {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-function AppPure(props) {
+const filterToOperationTypeMap = {
+  all: ['-'], // Not used
+  query: ['query'],
+  mutation: ['mutation'],
+  subscription: ['subscription', 'subscription data'],
+} as const;
+
+function AppPure(props: AppProps) {
   const { list = [] } = props;
   const [activeRequestId, setActiveRequestId] = useState(null);
   const [initialTab, setInitialTab] = useState(null);
-  const [filter, setFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<
+    'all' | 'query' | 'mutation' | 'subscription'
+  >('all');
 
   const defaultColumnWidth =
     (window.innerWidth - 70 - 90) / (columns.length - 2) -
@@ -232,27 +293,38 @@ function AppPure(props) {
       width: defaultColumnWidth,
       maxWidth: Math.max(defaultColumnWidth, 400),
     }),
-    []
+    [],
   );
 
-  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const filteredList = useMemo(() => {
-    return filter.length > 0
-      ? list.filter((item) =>
-          // Search in GraphQL operation name and variables
-          ((item.operationName || "") + item.variablesString).match(RegExp(escapeRegex(filter), "i"))
-        )
-      : list;
-  }, [filter, list]);
+    return list
+      .filter((item) => {
+        // Search in GraphQL operation name and variables
+        if (searchQuery.length > 0) {
+          return ((item.operationName || '') + item.variablesString).match(
+            RegExp(escapeRegex(searchQuery), 'i'),
+          );
+        }
+        return true;
+      })
+      .filter((item) => {
+        // Filter by operation type
+        if (filter && filter.length > 0) {
+          if (filter === 'all') {
+            return true;
+          }
+          if (filterToOperationTypeMap[filter] && item.type) {
+            // @ts-expect-error FIXME
+            return filterToOperationTypeMap[filter].includes(item.type);
+          }
+        }
 
-  const {
-    getTableProps,
-    getTableHeaderProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable(
+        return true;
+      });
+  }, [searchQuery, filter, list]);
+
+  const { headerGroups, rows, prepareRow } = useTable(
     {
       columns,
       data: filteredList,
@@ -260,7 +332,7 @@ function AppPure(props) {
     },
     useBlockLayout,
     useResizeColumns,
-    useSortBy
+    useSortBy,
   );
 
   const tableWidth = headerGroups[0].getHeaderGroupProps().style.width;
@@ -287,9 +359,33 @@ function AppPure(props) {
         <FilterInput
           placeholder="Filter"
           type="text"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
+        <FilterButton
+          isActive={filter === 'all'}
+          onClick={() => setFilter('all')}
+        >
+          All
+        </FilterButton>
+        <FilterButton
+          isActive={filter === 'query'}
+          onClick={() => setFilter('query')}
+        >
+          Query
+        </FilterButton>
+        <FilterButton
+          isActive={filter === 'mutation'}
+          onClick={() => setFilter('mutation')}
+        >
+          Mutation
+        </FilterButton>
+        <FilterButton
+          isActive={filter === 'subscription'}
+          onClick={() => setFilter('subscription')}
+        >
+          Subscription
+        </FilterButton>
       </Toolbar>
       <Container>
         {list.length === 0 && <EmptyState />}
@@ -302,33 +398,40 @@ function AppPure(props) {
                     {headerGroup.headers.map((column) => (
                       <Header
                         {...column.getHeaderProps(
-                          column.getSortByToggleProps()
+                          // @ts-expect-error FIXME
+                          column.getSortByToggleProps(),
                         )}
                       >
-                        {column.render("Header")}
+                        {column.render('Header')}
 
+                        {/* @ts-expect-error FIXME */}
                         {column.isSorted ? (
+                          // @ts-expect-error FIXME
                           column.isSortedDesc ? (
                             <div className="arrow arrow-down"></div>
                           ) : (
                             <div className="arrow arrow-up"></div>
                           )
                         ) : (
-                          ""
+                          ''
                         )}
 
+                        {/* @ts-expect-error FIXME */}
                         <Resizer {...column.getResizerProps()} />
                       </Header>
                     ))}
                   </div>
                 ))}
               </THead>
-              <TBody style={{ width: tableWidth, overflowX: "hidden" }}>
+              <TBody style={{ width: tableWidth, overflowX: 'hidden' }}>
                 {rows.map((row) => {
                   prepareRow(row);
                   const hasError =
+                    // @ts-expect-error FIXME
                     row.original.errorsCount > 0 ||
-                    row.original.status === "Cancelled";
+                    // @ts-expect-error FIXME
+                    row.original.status === 'Cancelled';
+                  // @ts-expect-error FIXME
                   const isActive = row.original.id === activeRequestId;
                   return (
                     <Row
@@ -341,19 +444,23 @@ function AppPure(props) {
                           <Cell
                             {...cell.getCellProps()}
                             onClick={() => {
+                              // @ts-expect-error FIXME
                               setActiveRequestId(row.original.id);
                               const map = {
-                                Query: "query",
-                                Variables: "variables",
-                                Data: "data",
-                                Errors: "errors",
+                                Query: 'query',
+                                Variables: 'variables',
+                                Data: 'data',
+                                Errors: 'errors',
                               };
+                              // @ts-expect-error FIXME
                               if (map[cell.column.Header]) {
+                                // @ts-expect-error FIXME
                                 setInitialTab(map[cell.column.Header]);
                               }
                             }}
                           >
-                            {cell.render("Cell")}
+                            {cell.render('Cell')}
+                            {/* @ts-expect-error FIXME */}
                             <Resizer {...cell.column.getResizerProps()} />
                           </Cell>
                         );
@@ -380,7 +487,7 @@ function AppPure(props) {
   );
 }
 
-export function App(props) {
+export function App(props: AppProps) {
   return (
     <ErrorBoundary>
       <AppPure {...props} />

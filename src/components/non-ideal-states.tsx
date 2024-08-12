@@ -1,5 +1,5 @@
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 
 const NonIdealState = styled.div`
   display: flex;
@@ -22,7 +22,12 @@ export function EmptyState() {
     <NonIdealState>
       <h1>🚀</h1>
       <p>Recording GraphQL requests...</p>
-      <p>Perform a request or reload the page to record.</p>
+      <p>
+        Perform a request or reload the page to record.
+        <br />
+        If your app is using websocket, page refresh is required while this tool
+        is open.
+      </p>
       <p>
         <a
           target="_blank"
