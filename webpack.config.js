@@ -5,9 +5,9 @@ const BomPlugin = require('webpack-utf8-bom');
 module.exports = {
   mode: "development",
   entry: {
-    saturn: "./src/saturn.js",
-    dev: "./src/dev.js",
-    devtools: "./src/devtools.js",
+    saturn: "./src/saturn.tsx",
+    dev: "./src/dev.tsx",
+    devtools: "./src/devtools.ts",
   },
   devtool: "inline-source-map",
   devServer: {
@@ -20,7 +20,7 @@ module.exports = {
     publicPath: "/", // base path where referenced files will be look for
   },
   resolve: {
-    extensions: ["*", ".js", ".jsx"],
+    extensions: ["*", ".js", ".jsx", '.tsx', '.ts', '.js'],
     alias: {
       "@": path.resolve(__dirname, "src"), // shortcut to reference src folder from anywhere
     },
@@ -38,6 +38,11 @@ module.exports = {
   ],
   module: {
     rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
       {
         // config for es6 jsx
         test: /\.(js|jsx)$/,

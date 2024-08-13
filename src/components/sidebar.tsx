@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
-import styled, { css } from "styled-components";
-import JSONTree from "react-json-tree";
-import { GraphqlCodeBlock } from "graphql-syntax-highlighter-react";
-import { LightGray } from "./cells";
-import darkTheme from "./themes/dark";
-import lightTheme from "./themes/light";
+import React, { useEffect, useState } from 'react';
+import styled, { css } from 'styled-components';
+import { GraphqlCodeBlock } from 'graphql-syntax-highlighter-react';
+
+import darkTheme from './themes/dark';
+import lightTheme from './themes/light';
+import { ListItem } from './app';
+import { JSONTree } from 'react-json-tree';
 
 const SidebarStyled = styled.div`
   display: flex;
@@ -54,7 +55,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const Tab = styled.div`
+const Tab = styled.div<{ active: boolean }>`
   height: 28px;
   line-height: 28px;
   padding: 0px 10px;
@@ -75,7 +76,7 @@ const Tab = styled.div`
     `}
 `;
 
-const CodeText = styled.div`
+const CodeText = styled.div<{ topPadding?: boolean; bottomPadding?: boolean }>`
   font-size: 11px;
   font-family: Menlo, monospace;
   line-height: 1.2;
@@ -97,10 +98,16 @@ const CodeText = styled.div`
       color: ${(props) => props.theme.colors.jsonKeyword};
     }
   }
+
   ${(props) =>
     props.topPadding &&
     css`
       padding-top: 8px;
+    `}
+  ${(props) =>
+    props.bottomPadding &&
+    css`
+      padding-bottom: 24px;
     `}
 `;
 
@@ -113,9 +120,9 @@ const EmptyCount = styled.span`
   color: #7c7c7c;
 `;
 
-function renderVariablesCount(variables) {
+function renderVariablesCount(variables?: any) {
   if (!variables) {
-    return "";
+    return '';
   }
   const count = Object.keys(variables).length;
   if (count === 0) {
@@ -124,21 +131,26 @@ function renderVariablesCount(variables) {
   return `(${count})`;
 }
 
-function renderErrorsCount(item) {
-  if (item.errorsCount === 0) {
+function renderErrorsCount(item: { errorsCount?: number }) {
+  if (!item.errorsCount || item.errorsCount === 0) {
     return <EmptyCount>({item.errorsCount})</EmptyCount>;
   }
   return `(${item.errorsCount})`;
 }
 
-function getDefaultTab(item) {
+function getDefaultTab(item: { errorsCount?: number }) {
   if (item.errorsCount > 0) {
-    return "errors";
+    return 'errors';
   }
-  return "query";
+  return 'query';
 }
 
-export function Sidebar(props) {
+export function Sidebar(props: {
+  item: ListItem;
+  initialTab: string | null;
+  onClose: () => void;
+  isDarkMode: boolean;
+}) {
   const { item, initialTab, onClose } = props;
   const [activeTab, setActiveTab] = useState(getDefaultTab(item));
 
@@ -148,12 +160,12 @@ export function Sidebar(props) {
     }
   }, [initialTab]);
 
-  const theme = props.isDarkMode ? darkTheme : lightTheme
+  const theme = props.isDarkMode ? darkTheme : lightTheme;
 
   // Try-hard copy of chrome devtool json explorer
   const JSONTreeTheme = {
-    scheme: "saturn",
-    author: "saturn",
+    scheme: 'saturn',
+    author: 'saturn',
     base00: theme.colors.background,
     base01: theme.colors.background,
     base02: theme.colors.jsonText,
@@ -166,7 +178,7 @@ export function Sidebar(props) {
     base09: theme.colors.jsonNumber,
     base0A: theme.colors.jsonText,
     base0B: theme.colors.jsonKeyword,
-    base0C: "#878787",
+    base0C: '#878787',
     base0D: theme.colors.jsonProperty,
     base0E: theme.colors.jsonText,
     base0F: theme.colors.jsonText,
@@ -179,36 +191,34 @@ export function Sidebar(props) {
           <div>×</div>
         </CloseButton>
         <Tab
-          active={activeTab === "query"}
-          onClick={() => setActiveTab("query")}
+          active={activeTab === 'query'}
+          onClick={() => setActiveTab('query')}
         >
           Query
         </Tab>
         <Tab
-          active={activeTab === "variables"}
-          onClick={() => setActiveTab("variables")}
+          active={activeTab === 'variables'}
+          onClick={() => setActiveTab('variables')}
         >
           Variables {renderVariablesCount(item.variables)}
         </Tab>
-        <Tab active={activeTab === "data"} onClick={() => setActiveTab("data")}>
+        <Tab active={activeTab === 'data'} onClick={() => setActiveTab('data')}>
           Data
         </Tab>
         <Tab
-          active={activeTab === "errors"}
-          onClick={() => setActiveTab("errors")}
+          active={activeTab === 'errors'}
+          onClick={() => setActiveTab('errors')}
         >
           Errors {renderErrorsCount(item)}
         </Tab>
       </SidebarHeader>
       <SidebarContent>
-        {activeTab === "query" && (
-          <QueryTab theme={JSONTreeTheme} item={item} />
-        )}
-        {activeTab === "variables" && (
+        {activeTab === 'query' && <QueryTab item={item} />}
+        {activeTab === 'variables' && (
           <VariablesTab theme={JSONTreeTheme} item={item} />
         )}
-        {activeTab === "data" && <DataTab theme={JSONTreeTheme} item={item} />}
-        {activeTab === "errors" && (
+        {activeTab === 'data' && <DataTab theme={JSONTreeTheme} item={item} />}
+        {activeTab === 'errors' && (
           <ErrorsTab theme={JSONTreeTheme} item={item} />
         )}
       </SidebarContent>
@@ -216,7 +226,13 @@ export function Sidebar(props) {
   );
 }
 
-function VariablesTab({ item, theme }) {
+function VariablesTab({
+  item,
+  theme,
+}: {
+  item: ListItem;
+  theme: Record<string, any>;
+}) {
   if (!item.variables || Object.keys(item.variables).length === 0) {
     return <EmptyState>No variables</EmptyState>;
   }
@@ -226,25 +242,31 @@ function VariablesTab({ item, theme }) {
         theme={theme}
         hideRoot={false}
         invertTheme={false}
-        shouldExpandNode={() => true}
+        shouldExpandNodeInitially={() => true}
         data={item.variables}
       />
     </CodeText>
   );
 }
 
-function QueryTab({ item }) {
+function QueryTab({ item }: { item: ListItem }) {
   if (item.query === undefined || item.query === null) {
     return <EmptyState>No query</EmptyState>;
   }
   return (
-    <CodeText topPadding>
+    <CodeText topPadding bottomPadding>
       <GraphqlCodeBlock className="graphql-syntax" queryBody={item.query} />
     </CodeText>
   );
 }
 
-function ErrorsTab({ item, theme }) {
+function ErrorsTab({
+  item,
+  theme,
+}: {
+  item: ListItem;
+  theme: Record<string, any>;
+}) {
   if (item.errors === undefined || item.errors === null) {
     return <EmptyState>No errors</EmptyState>;
   }
@@ -254,15 +276,21 @@ function ErrorsTab({ item, theme }) {
         theme={theme}
         hideRoot={true}
         invertTheme={false}
-        shouldExpandNode={() => true}
+        shouldExpandNodeInitially={() => true}
         data={item.errors}
       />
     </CodeText>
   );
 }
 
-function DataTab({ item, theme }) {
-  if (item.data === undefined || item.data === null || item.data === "") {
+function DataTab({
+  item,
+  theme,
+}: {
+  item: ListItem;
+  theme: Record<string, any>;
+}) {
+  if (item.data === undefined || item.data === null || item.data === '') {
     return <EmptyState>No data</EmptyState>;
   }
   return (
@@ -271,7 +299,7 @@ function DataTab({ item, theme }) {
         theme={theme}
         hideRoot={true}
         invertTheme={false}
-        shouldExpandNode={() => true}
+        shouldExpandNodeInitially={() => true}
         data={item.data}
       />
     </CodeText>
