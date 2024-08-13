@@ -62,7 +62,7 @@ export function processRawNetworkEntries(
       }
 
       // Ignore ws messages before the list was cleared
-      if (clearedAt && wsMessage.time * 1000 < clearedAt) {
+      if (clearedAt && processed.time.getTime() < clearedAt) {
         return false;
       }
 
@@ -89,17 +89,11 @@ export function processRawNetworkEntries(
     });
 
   const transformed = httpRequests
-    .filter((entry) => {
-      if (clearedAt) {
-        if (
-          new Date(entry.request.startedDateTime).getTime() * 1000 <
-          clearedAt
-        ) {
-          return false;
-        }
-      }
-      return true;
-    })
+    .filter((entry) =>
+      clearedAt
+        ? new Date(entry.request.startedDateTime).getTime() > clearedAt
+        : true,
+    )
     .map((entry) => {
       const { request, content } = entry;
       const parsedRequestBody = JSON.parse(request.request.postData.text);

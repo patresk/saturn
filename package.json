@@ -1,7 +1,7 @@
 {
   "name": "saturn",
-  "version": "0.3.3",
-  "description": "Saturn is a Chrome Extension to debug GraphQL requests, similar to the Network tab. GraphQL developer tools.",
+  "version": "0.3.4",
+  "description": "Saturn is a Chrome Extension to debug GraphQL requests, similar to the Network tab.",
   "main": "index.js",
   "author": "Patrik Gallik <patrik.gallik@gmail.com>",
   "license": "MIT",
