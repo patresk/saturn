@@ -88,7 +88,11 @@ const FilterButton = styled.div<{ isActive?: boolean }>`
     props.isActive
       ? props.theme.colors.tableRowActive
       : props.theme.colors.toolbarBackgroundColor};
-  border: 1px solid ${(props) => props.theme.colors.tableHeaderBorder};
+  border: 1px solid
+    ${(props) =>
+      props.isActive
+        ? props.theme.colors.tableRowActive
+        : props.theme.colors.tableHeaderBorder};
   padding-top: 0px;
   padding-bottom: 0px;
   line-height: 12px;

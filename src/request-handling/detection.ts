@@ -43,7 +43,6 @@ export function isGraphqlWsRequest(entry: NetworkEntry) {
       (headerWebsocketProtocol &&
         headerWebsocketProtocol.value === 'graphql-transport-ws'))
   ) {
-    console.log('websocket entry', entry);
     return true;
   }
   return false;

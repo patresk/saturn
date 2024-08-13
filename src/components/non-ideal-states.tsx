@@ -25,8 +25,7 @@ export function EmptyState() {
       <p>
         Perform a request or reload the page to record.
         <br />
-        If your app is using websocket, page refresh is required while this tool
-        is open.
+        If your app is using a websocket link, page reload is required.
       </p>
       <p>
         <a
