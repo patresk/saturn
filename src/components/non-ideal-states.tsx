@@ -30,7 +30,7 @@ export function EmptyState() {
       <p>
         <a
           target="_blank"
-          href="https://github.com/patresk/saturn/blob/master/src/saturn.js#L10"
+          href="https://github.com/patresk/saturn/blob/master/src/request-handling/detection.ts#L5"
         >
           How is GraphQL request detected?
         </a>
