@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import styled, { css } from 'styled-components';
+import React, { useState } from 'react';
+import styled, { createGlobalStyle, css } from 'styled-components';
 
 // Neither pane can be dragged smaller than this, so one can never disappear.
 export const MIN_PANE_PX = 100;
@@ -45,6 +45,16 @@ export function clampFraction(
   return Math.min(Math.max(fraction, minFraction), maxFraction);
 }
 
+// Rendered only while dragging, so the cursor stays put and the drag never
+// selects text under it. Mounting/unmounting with the drag means React cleans it
+// up for us, including if the pane closes mid-drag.
+const DraggingStyles = createGlobalStyle`
+  * {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+`;
+
 const Handle = styled.div<{ isDragging: boolean }>`
   flex: 0 0 4px;
   cursor: col-resize;
@@ -68,28 +78,6 @@ export function Splitter(props: {
 }) {
   const { containerRef, fraction, onChange, onCommit } = props;
   const [isDragging, setIsDragging] = useState(false);
-  // The last value onChange saw, so pointer up can commit it without waiting
-  // for a re-render.
-  const latestFraction = useRef(fraction);
-
-  useEffect(() => {
-    latestFraction.current = fraction;
-  }, [fraction]);
-
-  useEffect(() => {
-    if (!isDragging) {
-      return;
-    }
-    const previousUserSelect = document.body.style.userSelect;
-    const previousCursor = document.body.style.cursor;
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
-
-    return () => {
-      document.body.style.userSelect = previousUserSelect;
-      document.body.style.cursor = previousCursor;
-    };
-  }, [isDragging]);
 
   // Derive the fraction from the container rect instead of a pixel delta, so it
   // stays correct under the `zoom` wrapper used by the dev harness.
@@ -119,50 +107,56 @@ export function Splitter(props: {
   }
 
   return (
-    <Handle
-      isDragging={isDragging}
-      role="separator"
-      aria-orientation="vertical"
-      aria-label="Resize request details"
-      aria-valuenow={Math.round(fraction * 100)}
-      tabIndex={0}
-      onPointerDown={(event) => {
-        event.preventDefault();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        setIsDragging(true);
-      }}
-      onPointerMove={(event) => {
-        if (!isDragging) {
-          return;
-        }
-        const next = fractionFromClientX(event.clientX);
-        if (next !== null) {
-          latestFraction.current = next;
+    <>
+      {isDragging && <DraggingStyles />}
+      <Handle
+        isDragging={isDragging}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize request details"
+        aria-valuenow={Math.round(fraction * 100)}
+        tabIndex={0}
+        onPointerDown={(event) => {
+          event.preventDefault();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          setIsDragging(true);
+        }}
+        onPointerMove={(event) => {
+          if (!isDragging) {
+            return;
+          }
+          const next = fractionFromClientX(event.clientX);
+          if (next !== null) {
+            onChange(next);
+          }
+        }}
+        onPointerUp={(event) => {
+          if (!isDragging) {
+            return;
+          }
+          event.currentTarget.releasePointerCapture(event.pointerId);
+          setIsDragging(false);
+          // Commit where the pointer actually ended up, rather than trusting the
+          // last render to have caught up with the final move.
+          const next = fractionFromClientX(event.clientX) ?? fraction;
           onChange(next);
-        }
-      }}
-      onPointerUp={(event) => {
-        if (!isDragging) {
-          return;
-        }
-        event.currentTarget.releasePointerCapture(event.pointerId);
-        setIsDragging(false);
-        onCommit(latestFraction.current);
-      }}
-      onDoubleClick={() => {
-        onChange(DEFAULT_FRACTION);
-        onCommit(DEFAULT_FRACTION);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          nudge(KEYBOARD_STEP);
-        }
-        if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          nudge(-KEYBOARD_STEP);
-        }
-      }}
-    />
+          onCommit(next);
+        }}
+        onDoubleClick={() => {
+          onChange(DEFAULT_FRACTION);
+          onCommit(DEFAULT_FRACTION);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            nudge(KEYBOARD_STEP);
+          }
+          if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            nudge(-KEYBOARD_STEP);
+          }
+        }}
+      />
+    </>
   );
 }
