@@ -7,10 +7,10 @@ import lightTheme from './themes/light';
 import { ListItem } from './app';
 import { JSONTree } from 'react-json-tree';
 
+// The divider on the left edge is drawn by the Splitter, not by this component.
 const SidebarStyled = styled.div`
   display: flex;
   flex-direction: column;
-  border-left: 2px solid ${(props) => props.theme.colors.sidebarBorderColor};
 `;
 
 const SidebarHeader = styled.div`
@@ -52,6 +52,27 @@ const CloseButton = styled.div`
   &:hover {
     background-color: #db9793;
     color: white;
+  }
+`;
+
+const ExpandButton = styled.div`
+  height: 16px;
+  width: 16px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 2px 0 4px;
+  color: ${(props) => props.theme.colors.color};
+  &:hover {
+    background-color: ${(props) => props.theme.colors.tableHeaderHover};
+  }
+  > svg {
+    width: 12px;
+    height: 12px;
+    display: block;
   }
 `;
 
@@ -149,9 +170,11 @@ export function Sidebar(props: {
   item: ListItem;
   initialTab: string | null;
   onClose: () => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   isDarkMode: boolean;
 }) {
-  const { item, initialTab, onClose } = props;
+  const { item, initialTab, onClose, isExpanded, onToggleExpand } = props;
   const [activeTab, setActiveTab] = useState(getDefaultTab(item));
 
   useEffect(() => {
@@ -190,6 +213,31 @@ export function Sidebar(props: {
         <CloseButton onClick={onClose}>
           <div>×</div>
         </CloseButton>
+        <ExpandButton
+          title={isExpanded ? 'Collapse' : 'Expand'}
+          onClick={onToggleExpand}
+        >
+          <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {isExpanded ? (
+              <>
+                <path d="M8.5 3.5 13 8l-4.5 4.5" />
+                <path d="M3 3.5 7.5 8l-4.5 4.5" />
+              </>
+            ) : (
+              <>
+                <path d="M7.5 3.5 3 8l4.5 4.5" />
+                <path d="M13 3.5 8.5 8l4.5 4.5" />
+              </>
+            )}
+          </svg>
+        </ExpandButton>
         <Tab
           active={activeTab === 'query'}
           onClick={() => setActiveTab('query')}

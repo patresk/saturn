@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, ReactNode } from 'react';
+﻿import React, { useState, useMemo, useRef, ReactNode } from 'react';
 import styled, { css, ThemeProvider } from 'styled-components';
 import {
   useTable,
@@ -18,6 +18,12 @@ import {
 } from './cells';
 import darkTheme from './themes/dark';
 import lightTheme from './themes/light';
+import {
+  MIN_PANE_PX,
+  Splitter,
+  loadSidebarFraction,
+  saveSidebarFraction,
+} from './splitter';
 
 export interface ListItem {
   id: string;
@@ -114,10 +120,19 @@ const ClearButton = styled.a`
   }
 `;
 
-const TableWrapper = styled.div`
-  width: 100%;
+const TableWrapper = styled.div<{ isCollapsed?: boolean }>`
+  flex: 1 1 0;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: auto;
+  /* Collapsed to zero width rather than unmounted or display: none, so the
+     list keeps its scroll position while the details pane is expanded. */
+  ${(props) =>
+    props.isCollapsed &&
+    css`
+      flex: 0 0 0;
+      overflow: hidden;
+    `}
 `;
 
 const Table = styled.div`
@@ -218,11 +233,20 @@ const Cell = styled.div`
   overflow: hidden;
 `;
 
-const SidebarWrapper = styled.div`
-  min-width: 50vw;
-  max-width: 50vw;
-  flex-grow: 1;
+const SidebarWrapper = styled.div<{ isExpanded?: boolean }>`
+  flex: 0 0 auto;
   flex-direction: column;
+  /* Backstop for the drag clamping: keeps both panes usable when the DevTools
+     pane itself is resized, without needing a resize listener. */
+  min-width: ${MIN_PANE_PX}px;
+  max-width: calc(100% - ${MIN_PANE_PX}px);
+  ${(props) =>
+    props.isExpanded &&
+    css`
+      flex: 1 1 auto;
+      width: auto !important;
+      max-width: none;
+    `}
 `;
 
 const THead = styled.div`
@@ -286,6 +310,13 @@ function AppPure(props: AppProps) {
   const [filter, setFilter] = useState<
     'all' | 'query' | 'mutation' | 'subscription'
   >('all');
+  // Share of the pane taken by the details sidebar. Stored as a fraction so it
+  // survives the DevTools pane being resized or re-docked.
+  const [sidebarFraction, setSidebarFraction] = useState(loadSidebarFraction);
+  // Sticky for the session, but deliberately not persisted: Saturn should never
+  // start up with the request list hidden.
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const defaultColumnWidth =
     (window.innerWidth - 70 - 90) / (columns.length - 2) -
@@ -341,6 +372,9 @@ function AppPure(props: AppProps) {
 
   const tableWidth = headerGroups[0].getHeaderGroupProps().style.width;
 
+  const activeItem = list.find((item) => item.id === activeRequestId);
+  const isSidebarOpen = Boolean(activeRequestId && activeItem);
+
   return (
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
       <Toolbar>
@@ -391,10 +425,10 @@ function AppPure(props: AppProps) {
           Subscription
         </FilterButton>
       </Toolbar>
-      <Container>
+      <Container ref={containerRef}>
         {list.length === 0 && <EmptyState />}
         {list.length > 0 && (
-          <TableWrapper>
+          <TableWrapper isCollapsed={isSidebarOpen && isSidebarExpanded}>
             <Table style={{ width: tableWidth }}>
               <THead style={{ width: tableWidth }}>
                 {headerGroups.map((headerGroup) => (
@@ -476,12 +510,25 @@ function AppPure(props: AppProps) {
             </Table>
           </TableWrapper>
         )}
-        {activeRequestId && list.find((i) => i.id === activeRequestId) && (
-          <SidebarWrapper>
+        {isSidebarOpen && !isSidebarExpanded && (
+          <Splitter
+            containerRef={containerRef}
+            fraction={sidebarFraction}
+            onChange={setSidebarFraction}
+            onCommit={saveSidebarFraction}
+          />
+        )}
+        {isSidebarOpen && (
+          <SidebarWrapper
+            isExpanded={isSidebarExpanded}
+            style={{ width: `${sidebarFraction * 100}%` }}
+          >
             <Sidebar
               isDarkMode={isDarkMode}
               initialTab={initialTab}
-              item={list.find((i) => i.id === activeRequestId)}
+              item={activeItem}
+              isExpanded={isSidebarExpanded}
+              onToggleExpand={() => setIsSidebarExpanded((value) => !value)}
               onClose={() => setActiveRequestId(null)}
             />
           </SidebarWrapper>
