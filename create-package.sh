@@ -1,1 +1,0 @@
-tar -a -cf package.zip dist/images dist/saturn.html dist/saturn.js dist/manifest.json dist/devtools.js dist/devtools.html;

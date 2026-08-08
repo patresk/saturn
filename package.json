@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "webpack --mode production",
+    "package": "node scripts/package.mjs",
     "start:dev": "webpack-dev-server"
   },
   "dependencies": {
